@@ -4220,8 +4220,12 @@
             .card:hover {
               border-color: rgba(120, 210, 255, 0.5);
             }
+            .sheet:focus {
+              outline: none;
+            }
             .card:focus-visible,
             .fab:focus-visible,
+            .x:focus-visible,
             .act button:focus-visible {
               outline: 2px solid #ffd27a;
               outline-offset: 2px;
@@ -4385,7 +4389,7 @@
             }
           </style>
           <button class="fab" type="button" aria-expanded="false" aria-controls="sheet"><span class="dots">${STANDARDS.map(() => "<i></i>").join("")}</span><span>What if there were no standards?</span><small id="cnt"></small></button>
-          <section class="sheet" id="sheet" role="dialog" aria-label="What if there were no standards?" aria-modal="false">
+          <section class="sheet" id="sheet" role="dialog" aria-label="What if there were no standards?" aria-modal="true" tabindex="-1" inert aria-hidden="true">
             <header><div><h3>This page runs on open standards</h3><p>Each switch is a published standard. Turn one off and see what this page loses.</p></div><button class="x" type="button" aria-label="Close">✕</button></header>
             <div class="grid">${STANDARDS.map((standard) => `<button class="card" type="button" role="switch" aria-checked="true" data-k="${standard.key}"><span class="ic" aria-hidden="true">${standard.icon}</span><span><div class="t">${standard.title}</div><div class="d">${standard.descriptionOn}</div><div class="s">${standard.standard}</div></span><span class="sw" aria-hidden="true"></span></button>`).join("")}</div>
             <div class="act"><span id="msg">All standards are working.</span><div><button type="button" id="all-off">Turn all off</button><button type="button" class="pri" id="all-on">Restore all</button></div></div>
@@ -4393,17 +4397,85 @@
 
           const fab = shadow.querySelector(".fab");
           const sheet = shadow.querySelector(".sheet");
+          const FOCUSABLE = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+          let returnFocusTo = null;
 
+          const isSheetOpen = () => sheet.classList.contains("open");
+
+          /* Only controls the user can actually reach: hidden rows are skipped. */
+          function focusableInSheet() {
+            return Array.from(sheet.querySelectorAll(FOCUSABLE)).filter(
+              (element) => element.getClientRects().length > 0,
+            );
+          }
+
+          /*
+           * Opens and closes the sheet, moving focus in with it and back out
+           * again. A closed sheet is inert, so its buttons stay out of the tab
+           * order instead of sitting off-screen behind the page.
+           */
           function setSheetOpen(open) {
+            if (open === isSheetOpen()) return;
+
+            if (open) {
+              const active = shadow.activeElement || document.activeElement;
+              returnFocusTo = active && active !== document.body ? active : fab;
+              sheet.inert = false;
+              sheet.removeAttribute("aria-hidden");
+            }
+
             sheet.classList.toggle("open", open);
-            fab.setAttribute("aria-expanded", open);
+            fab.setAttribute("aria-expanded", String(open));
             fab.style.transform = open ? "translate(-50%,120px)" : "";
+            fab.inert = open;
+
+            if (open) {
+              sheet.focus();
+              return;
+            }
+
+            sheet.inert = true;
+            sheet.setAttribute("aria-hidden", "true");
+            const target = returnFocusTo && returnFocusTo.isConnected ? returnFocusTo : fab;
+            returnFocusTo = null;
+            target.focus();
           }
 
           fab.onclick = () => setSheetOpen(true);
           shadow.querySelector(".x").onclick = () => setSheetOpen(false);
+
+          /* Tab and Shift+Tab cycle inside the sheet while it is open. */
+          shadow.addEventListener("keydown", (event) => {
+            if (event.key !== "Tab" || !isSheetOpen()) return;
+
+            const items = focusableInSheet();
+            if (!items.length) {
+              event.preventDefault();
+              sheet.focus();
+              return;
+            }
+
+            const first = items[0];
+            const last = items[items.length - 1];
+            const active = shadow.activeElement;
+
+            if (!items.includes(active)) {
+              event.preventDefault();
+              (event.shiftKey ? last : first).focus();
+            } else if (event.shiftKey && active === first) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && active === last) {
+              event.preventDefault();
+              first.focus();
+            }
+          });
+
+          /* Escape closes the sheet wherever focus happens to be. */
           addEventListener("keydown", (event) => {
-            if (event.key === "Escape") setSheetOpen(false);
+            if (event.key !== "Escape" || !isSheetOpen()) return;
+            event.preventDefault();
+            setSheetOpen(false);
           });
 
           /* ---------- Standard by standard ---------- */
