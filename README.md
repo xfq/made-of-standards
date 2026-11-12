@@ -28,6 +28,8 @@ Open `index.html` in a browser.
 
 “This is for everyone” is Tim Berners-Lee, London 2012 opening ceremony.
 
+Made of Standards is an independent project: it is not produced, reviewed or endorsed by the W3C.
+
 ## License
 
 - Code — the markup, CSS and JavaScript is released under the [MIT License](LICENSE).

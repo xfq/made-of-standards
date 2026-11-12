@@ -1248,9 +1248,18 @@
         color: var(--dim);
         font-size: 12.5px;
         display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      footer.colophon .colophon-main {
+        display: flex;
         justify-content: space-between;
         gap: 20px;
         flex-wrap: wrap;
+      }
+      footer.colophon .colophon-note {
+        margin: 0;
+        max-width: 72ch;
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -1463,12 +1472,15 @@
         </div>
       </section>
     </main>
-    <!-- The footer is not currently shown:
     <footer class="colophon">
-      <span>Made of Standards</span>
-      <span class="mono">HTML · CSS · SVG · WebGL · Web Audio · Web Speech · Unicode</span>
+      <div class="colophon-main">
+        <span>Made of Standards</span>
+        <span class="mono">HTML · CSS · SVG · WebGL · Web Audio · Web Speech · Unicode</span>
+      </div>
+      <p class="colophon-note">
+        An independent project, not an official W3C project.
+      </p>
     </footer>
-    -->
     <script>
       /*
        * Made of Standards — all of the page's behaviour.
