@@ -684,6 +684,17 @@
         font-size: 18px;
         line-height: 1.35;
       }
+      #card .note {
+        display: inline-block;
+        margin: 0 0 0.6em;
+        padding: 0.15em 0.55em;
+        border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+        border-radius: 999px;
+        font: 10px var(--mono);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--c);
+      }
       #card p {
         margin: 0 0 0.6em;
         color: var(--dim);
@@ -2960,11 +2971,11 @@
               { name: "Largest Contentful Paint", path: "largest-contentful-paint" },
               { name: "Event Timing API", path: "event-timing" },
               { name: "Paint Timing", path: "paint-timing" },
-              { name: "Long Tasks API", path: "longtasks-1" },
+              { name: "Long Tasks API", path: "longtasks-1", note: "Discontinued" },
               { name: "Server Timing", path: "server-timing" },
               { name: "Beacon", path: "beacon" },
               { name: "Reporting API", path: "reporting-1" },
-              { name: "Device Memory", path: "device-memory" },
+              { name: "Device Memory API", path: "device-memory", note: "Discontinued" },
               { name: "requestIdleCallback", path: "requestidlecallback" },
             ],
           },
@@ -3020,9 +3031,14 @@
             label: "Markup & Graphics",
             color: "#ffd27a",
             specs: [
-              { name: "HTML5", path: "html5" },
-              { name: "HTML 4.01", path: "html401" },
-              { name: "XHTML 1.0", path: "xhtml1" },
+              {
+                name: "HTML Standard",
+                path: "html5",
+                note: "WHATWG",
+                url: "https://html.spec.whatwg.org/multipage/",
+              },
+              { name: "HTML 4.01", path: "html401", note: "Superseded" },
+              { name: "XHTML 1.0", path: "xhtml1", note: "Superseded" },
               { name: "SVG 2", path: "SVG2" },
               { name: "SVG 1.1", path: "SVG11" },
               { name: "MathML Core", path: "mathml-core" },
@@ -3142,11 +3158,13 @@
             groups.push(group);
 
             // Each spec orbits its group centre with a little Gaussian scatter.
-            groupData.specs.forEach(({ name, path }) => {
+            groupData.specs.forEach(({ name, path, note, url }) => {
               const spread = 0.12 + 0.16 * Math.sqrt(groupData.specs.length / 40);
               const star = {
                 name,
                 path,
+                note,
+                url,
                 group,
                 x: centreX + gaussian() * spread,
                 y: centreY + gaussian() * spread,
@@ -3502,9 +3520,11 @@
               infoCard.classList.remove("show");
               return;
             }
-            const url = star.path ? `https://www.w3.org/TR/${star.path}/` : "https://www.w3.org/TR/";
+            const url = star.url || (star.path ? `https://www.w3.org/TR/${star.path}/` : "https://www.w3.org/TR/");
+            const shown = url.replace(/^https?:\/\/(www\.)?/, "");
             infoCard.style.setProperty("--c", star.group.color);
-            infoCard.innerHTML = `<div class="g">${star.group.label.toUpperCase()}</div><h4>${star.name}</h4><p class="mono">w3.org/TR/${star.path}/</p><div style="display:flex;gap:8px"><a class="btn" style="text-decoration:none;font-size:13px" href="${url}" target="_blank" rel="noopener">Open the spec ↗</a><button class="btn" style="font-size:13px" type="button" id="cardx">Close</button></div>`;
+            const note = star.note ? `<span class="note">${star.note}</span>` : "";
+            infoCard.innerHTML = `<div class="g">${star.group.label.toUpperCase()}</div><h4>${star.name}</h4>${note}<p class="mono">${shown}</p><div style="display:flex;gap:8px"><a class="btn" style="text-decoration:none;font-size:13px" href="${url}" target="_blank" rel="noopener">Open the spec ↗</a><button class="btn" style="font-size:13px" type="button" id="cardx">Close</button></div>`;
             infoCard.classList.add("show");
             $("#cardx").onclick = () => selectStar(null);
           }

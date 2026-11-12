@@ -16,7 +16,7 @@ Standards are invisible precisely because they work. This page takes it away and
 
 - **Intro**: a WebGL particle field that morphs through four texts: `info.cern.ch`, W3C, “Made of Standards”, “for everyone”.
 - **Thirty years, played as music**: 26 dated milestones, from the 1989 proposal to the present. Each one is a bar of music and the instrument changes with the era: chiptune, FM, synth pop, ambient. Every note is synthesized live with Web Audio.
-- **The Spec Galaxy**: 174 W3C specifications in 8 clusters on a draggable map. Hover to read a name, click to open its `w3.org/TR/` page, or search.
+- **The Spec Galaxy**: 174 specifications in 8 clusters on a draggable map: 173 W3C and WHATWG documents. Hover to read a name, click to open its page, or search.
 - **One web, many scripts**: vertical Chinese and Japanese typeset by the browser: `writing-mode`, ruby, emphasis marks, `text-autospace`, punctuation trimming. The CSS being applied is shown alongside. Select it, copy it, or let a screen reader read it.
 - **See the web through other eyes**: four colour-vision deficiencies and low vision, simulated over the whole page with SVG filters; a WCAG 2.2 contrast lab that implements the relative-luminance formula; and this page's own accessibility tree, generated live from its DOM, with speech output.
 
