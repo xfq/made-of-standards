@@ -1,0 +1,4575 @@
+<!doctype html>
+<!--
+  Made of Standards — a single-file, dependency-free interactive exhibit.
+  Everything (markup, styles, data and behaviour) lives in this file.
+
+  The page is made of seven sections:
+    hero · manifesto · timeline · spec galaxy · writing systems · accessibility · finale
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Made of Standards</title>
+    <meta
+      name="description"
+      content="A web page made entirely of open standards. Switch any one off and see what it does."
+    />
+    <meta name="theme-color" content="#05070d">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Made of Standards">
+    <meta
+      property="og:description"
+      content="An interactive exhibit made entirely of open web standards. Switch one off and watch the page lose it."
+    />
+    <meta name="twitter:card" content="summary">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2305070d'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%235fd4ff'/%3E%3C/svg%3E"
+    />
+    <style>
+      /* A registered custom property, so the finale's conic gradient can animate. */
+      @property --angle {
+        syntax: "<angle>";
+        inherits: false;
+        initial-value: 0deg;
+      }
+
+      :root {
+        --bg: #05070d;
+        --bg2: #0a0f1c;
+        --ink: #e8edf7;
+        --dim: #8a96ad;
+        --faint: #3a455c;
+        --w3c: #005a9c;
+        --blue: oklch(68% 0.16 245);
+        --cyan: oklch(84% 0.13 205);
+        --gold: oklch(85% 0.14 85);
+        --rose: oklch(72% 0.17 15);
+        --green: oklch(80% 0.17 150);
+        --line: color-mix(in oklch, var(--ink) 12%, transparent);
+        --serif:
+          "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Noto Serif", Georgia,
+          "Noto Serif CJK SC", serif;
+        --sans:
+          "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+          "Noto Sans CJK SC", sans-serif;
+        --mono: "JetBrains Mono", "SFMono-Regular", "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        background: var(--bg);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      a {
+        color: var(--cyan);
+      }
+      ::selection {
+        background: var(--blue);
+        color: #fff;
+      }
+      .mono {
+        font-family: var(--mono);
+        letter-spacing: 0.02em;
+      }
+      .kicker {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--cyan);
+      }
+      section {
+        position: relative;
+        padding: clamp(80px, 12vh, 160px) clamp(20px, 6vw, 96px);
+      }
+      h2 {
+        font-family: var(--serif);
+        font-weight: 700;
+        font-size: clamp(36px, 5.4vw, 76px);
+        line-height: 1.08;
+        margin: 0.3em 0 0.25em;
+        letter-spacing: -0.01em;
+      }
+      h2 .en {
+        display: block;
+        font-family: var(--sans);
+        font-weight: 300;
+        font-size: 0.32em;
+        letter-spacing: 0.3em;
+        color: var(--dim);
+        text-transform: uppercase;
+        margin-top: 0.6em;
+      }
+      .lede {
+        max-width: 44em;
+        color: var(--dim);
+        font-size: clamp(15px, 1.25vw, 18px);
+      }
+      .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: color-mix(in oklch, var(--bg2) 70%, transparent);
+        padding: 0.55em 1.1em;
+        border-radius: 999px;
+        font-size: 14px;
+        transition:
+          background 0.25s,
+          border-color 0.25s,
+          color 0.25s;
+        backdrop-filter: blur(8px);
+      }
+      .btn:hover {
+        border-color: var(--cyan);
+      }
+      .btn[aria-pressed="true"],
+      .btn.on {
+        background: var(--ink);
+        color: var(--bg);
+        border-color: var(--ink);
+      }
+      .btn:focus-visible,
+      .tab:focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 3px;
+      }
+      .reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition:
+          opacity 1s cubic-bezier(0.2, 0.7, 0.2, 1),
+          transform 1s cubic-bezier(0.2, 0.7, 0.2, 1);
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* progress bar: scroll-driven animation */
+      #progress {
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: 2px;
+        z-index: 60;
+        background: linear-gradient(90deg, var(--w3c), var(--cyan), var(--gold));
+        transform-origin: 0 50%;
+        transform: scaleX(0);
+      }
+      @supports (animation-timeline: scroll()) {
+        #progress {
+          animation: grow linear both;
+          animation-timeline: scroll(root);
+        }
+        @keyframes grow {
+          to {
+            transform: scaleX(1);
+          }
+        }
+      }
+      /* side nav */
+      #nav {
+        position: fixed;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      #nav a {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--dim);
+        font-size: 12px;
+        font-family: var(--mono);
+      }
+      #nav a span {
+        opacity: 0;
+        transform: translateX(6px);
+        transition: 0.3s;
+      }
+      #nav a:hover span,
+      #nav a.cur span {
+        opacity: 1;
+        transform: none;
+      }
+      #nav a i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1px solid var(--dim);
+        transition: 0.3s;
+      }
+      #nav a.cur i {
+        background: var(--cyan);
+        border-color: var(--cyan);
+        box-shadow: 0 0 12px var(--cyan);
+      }
+      #nav a.cur {
+        color: var(--ink);
+      }
+      @media (max-width: 760px) {
+        #nav {
+          display: none;
+        }
+      }
+
+      /*
+       * Switchboard overrides. The floating panel adds one of these classes to
+       * <html> when a standard is switched off; each rule removes the feature
+       * the page would normally rely on, so the loss is visible.
+       */
+
+      /* Motion off: freeze every animation and transition. */
+      html.std-still *,
+      html.std-still *::before,
+      html.std-still *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      html.std-still {
+        scroll-behavior: auto;
+      }
+      /* Graphics off: hide everything drawn on a canvas. */
+      html.std-nogfx canvas {
+        visibility: hidden !important;
+      }
+      /* Vertical text off: force horizontal text and hide ruby, emphasis and tate-chu-yoko. */
+      html.std-nocjk .sample.v {
+        writing-mode: horizontal-tb !important;
+        height: auto !important;
+      }
+      html.std-nocjk .mong {
+        writing-mode: horizontal-tb !important;
+        height: auto !important;
+      }
+      html.std-nocjk rt,
+      html.std-nocjk rp {
+        display: none !important;
+      }
+      html.std-nocjk .em {
+        text-emphasis: none !important;
+        -webkit-text-emphasis: none !important;
+      }
+      html.std-nocjk .tcy {
+        text-combine-upright: none !important;
+        -webkit-text-combine: none !important;
+      }
+      /* Right-to-left off: force left-to-right direction and alignment. */
+      html.std-nortl [dir="rtl"],
+      html.std-nortl [dir="rtl"] * {
+        direction: ltr !important;
+        unicode-bidi: bidi-override !important;
+        text-align: left !important;
+      }
+      /* ========== HERO ========== */
+      #hero {
+        height: 100vh;
+        min-height: 620px;
+        padding: 0;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+      #gl {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #hero .hud {
+        position: absolute;
+        inset: 24px 28px;
+        pointer-events: none;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr auto;
+        font: 12px var(--mono);
+        color: var(--dim);
+        letter-spacing: 0.1em;
+      }
+      #hero .hud .tr {
+        text-align: right;
+      }
+      #hero .hud .bl {
+        align-self: end;
+      }
+      #hero .hud .br {
+        align-self: end;
+        text-align: right;
+      }
+      #caption {
+        position: absolute;
+        left: 50%;
+        bottom: 21vh;
+        translate: -50% 0;
+        text-align: center;
+        pointer-events: none;
+        width: 90vw;
+      }
+      #caption .y {
+        font: 500 13px var(--mono);
+        letter-spacing: 0.4em;
+        color: var(--cyan);
+      }
+      #caption .t {
+        font-family: var(--serif);
+        font-size: clamp(16px, 1.6vw, 22px);
+        color: var(--ink);
+        margin-top: 0.3em;
+        transition: opacity 0.6s;
+      }
+      #hero .scroll {
+        position: absolute;
+        bottom: 92px;
+        left: 50%;
+        translate: -50% 0;
+        font: 11px var(--mono);
+        letter-spacing: 0.3em;
+        color: var(--dim);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      #hero .scroll::after {
+        content: "";
+        width: 1px;
+        height: 38px;
+        background: linear-gradient(var(--cyan), transparent);
+        animation: drip 2s ease-in-out infinite;
+      }
+      @keyframes drip {
+        0% {
+          transform: scaleY(0);
+          transform-origin: top;
+        }
+        50% {
+          transform: scaleY(1);
+          transform-origin: top;
+        }
+        51% {
+          transform-origin: bottom;
+        }
+        100% {
+          transform: scaleY(0);
+          transform-origin: bottom;
+        }
+      }
+      #hero h1 {
+        position: absolute;
+        margin: 0;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+
+      /* ========== MANIFESTO ========== */
+      #manifesto {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 24px;
+        align-items: end;
+        min-height: 80vh;
+      }
+      #manifesto .big {
+        grid-column: 1 / span 9;
+        font-family: var(--serif);
+        font-size: clamp(28px, 3.7vw, 56px);
+        line-height: 1.3;
+        font-weight: 600;
+        margin: 0;
+      }
+      #manifesto .big .hl {
+        background: linear-gradient(90deg, var(--cyan), var(--gold));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      #manifesto .side {
+        grid-column: 10 / span 3;
+        color: var(--dim);
+        font-size: 14px;
+        border-left: 1px solid var(--line);
+        padding-left: 18px;
+      }
+      #manifesto .stats {
+        grid-column: 1/-1;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        margin-top: 40px;
+      }
+      #manifesto .stats div {
+        background: var(--bg);
+        padding: 22px 20px;
+      }
+      #manifesto .stats b {
+        display: block;
+        font: 600 clamp(30px, 3.4vw, 48px)/1 var(--serif);
+        color: var(--ink);
+      }
+      #manifesto .stats span {
+        font-size: 13px;
+        color: var(--dim);
+      }
+      @media (max-width: 900px) {
+        #manifesto .big,
+        #manifesto .side {
+          grid-column: 1/-1;
+        }
+      }
+
+      /* ========== TIMELINE ========== */
+      #history {
+        padding-inline: 0;
+      }
+      #history > header {
+        padding-inline: clamp(20px, 6vw, 96px);
+      }
+      .tl-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 28px clamp(20px, 6vw, 96px) 0;
+      }
+      .tl-controls .now {
+        font: 12px var(--mono);
+        color: var(--dim);
+        margin-left: auto;
+      }
+      #scope {
+        display: block;
+        width: calc(100% - 2 * clamp(20px, 6vw, 96px));
+        margin: 18px auto 0;
+        height: 150px;
+      }
+      #track {
+        display: flex;
+        gap: 18px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding: 40px clamp(20px, 6vw, 96px) 46px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--faint) transparent;
+        cursor: grab;
+        overscroll-behavior-x: contain;
+      }
+      #track.drag {
+        cursor: grabbing;
+        scroll-snap-type: none;
+      }
+      #track::before {
+        content: "";
+        position: absolute;
+      }
+      .ms {
+        flex: 0 0 clamp(240px, 22vw, 300px);
+        scroll-snap-align: center;
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 22px 22px 24px;
+        background: linear-gradient(160deg, color-mix(in oklch, var(--k) 16%, var(--bg2)), var(--bg) 70%);
+        transition:
+          transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+          border-color 0.4s,
+          box-shadow 0.4s;
+        user-select: none;
+      }
+      .ms .yr {
+        font: 600 44px/1 var(--serif);
+        color: var(--k);
+        letter-spacing: -0.01em;
+      }
+      .ms .mo {
+        font: 11px var(--mono);
+        color: var(--dim);
+        letter-spacing: 0.2em;
+        margin-left: 6px;
+      }
+      .ms h4 {
+        margin: 16px 0 6px;
+        font-size: 17px;
+        line-height: 1.4;
+      }
+      .ms p {
+        margin: 0;
+        font-size: 13.5px;
+        color: var(--dim);
+      }
+      .ms .cat {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        font: 10px var(--mono);
+        letter-spacing: 0.15em;
+        color: var(--k);
+        border: 1px solid color-mix(in oklch, var(--k) 50%, transparent);
+        padding: 1px 7px;
+        border-radius: 99px;
+      }
+      .ms.lit {
+        transform: translateY(-14px) scale(1.03);
+        border-color: var(--k);
+        box-shadow: 0 20px 60px -10px color-mix(in oklch, var(--k) 55%, transparent);
+      }
+      .ms.lit .yr {
+        text-shadow: 0 0 24px var(--k);
+      }
+      .ms.final {
+        background:
+          repeating-linear-gradient(
+            135deg,
+            transparent 0 10px,
+            color-mix(in oklch, var(--cyan) 6%, transparent) 10px 11px
+          ),
+          var(--bg2);
+      }
+      @supports (animation-timeline: view()) {
+        .ms {
+          animation: msin linear both;
+          animation-timeline: view(inline);
+          animation-range: entry 0% cover 30%;
+        }
+        @keyframes msin {
+          from {
+            opacity: 0.15;
+            scale: 0.9;
+          }
+          to {
+            opacity: 1;
+            scale: 1;
+          }
+        }
+      }
+
+      /* ========== GALAXY ========== */
+      #galaxy {
+        padding-bottom: 40px;
+      }
+      .gal-wrap {
+        position: relative;
+        height: min(78vh, 760px);
+        margin-top: 30px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        overflow: hidden;
+        background: radial-gradient(ellipse at 50% 55%, #0c1630 0%, #05070d 70%);
+      }
+      #sky {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        cursor: grab;
+      }
+      #sky.drag {
+        cursor: grabbing;
+      }
+      .gal-ui {
+        position: absolute;
+        left: 18px;
+        top: 18px;
+        right: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        pointer-events: none;
+      }
+      .gal-ui > * {
+        pointer-events: auto;
+      }
+      #q {
+        background: #000a;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0.55em 1.1em;
+        color: var(--ink);
+        font: 14px var(--sans);
+        width: min(320px, 100%);
+        min-width: 0;
+        outline: none;
+      }
+      #q:focus {
+        border-color: var(--cyan);
+      }
+      .legend {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .legend button {
+        font-size: 12px;
+        border: 1px solid color-mix(in oklch, var(--c) 60%, transparent);
+        color: var(--c);
+        background: #0009;
+        border-radius: 999px;
+        padding: 0.3em 0.8em;
+      }
+      .legend button.off {
+        opacity: 0.35;
+      }
+      #card {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        width: min(330px, calc(100% - 36px));
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #030712e6;
+        backdrop-filter: blur(10px);
+        padding: 16px 18px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: 0.35s;
+        pointer-events: none;
+      }
+      #card.show {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+      }
+      #card .g {
+        font: 11px var(--mono);
+        letter-spacing: 0.15em;
+        color: var(--c);
+      }
+      #card h4 {
+        margin: 0.3em 0 0.2em;
+        font-size: 18px;
+        line-height: 1.35;
+      }
+      #card p {
+        margin: 0 0 0.6em;
+        color: var(--dim);
+        font-size: 13px;
+      }
+      #tip {
+        position: absolute;
+        pointer-events: none;
+        font: 12px var(--mono);
+        background: #000c;
+        border: 1px solid var(--line);
+        padding: 3px 8px;
+        border-radius: 6px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+
+      /* ========== SCRIPTS ========== */
+      .scr {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+        gap: 24px;
+        margin-top: 36px;
+      }
+      @media (max-width: 980px) {
+        .scr {
+          grid-template-columns: 1fr;
+        }
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .tab {
+        border: 1px solid var(--line);
+        background: transparent;
+        border-radius: 12px;
+        padding: 0.5em 0.95em;
+        font-size: 15px;
+        color: var(--dim);
+        transition: 0.25s;
+      }
+      .tab[aria-selected="true"] {
+        color: var(--bg);
+        background: var(--gold);
+        border-color: var(--gold);
+      }
+      .stagebox {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        height: min(70vh, 600px);
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 80% 10%,
+            color-mix(in oklch, var(--gold) 9%, transparent),
+            transparent 50%
+          ),
+          linear-gradient(#0b1020, #070a14);
+      }
+      .stagebox::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(var(--line) 1px, transparent 1px);
+        background-size: 100% 48px;
+        opacity: 0.35;
+        pointer-events: none;
+      }
+      #stage {
+        position: absolute;
+        inset: 0;
+        padding: 42px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        view-transition-name: stage;
+      }
+      /*
+       * Writing-system samples. `v`/`h` pick vertical or horizontal writing;
+       * the other classes map to the controls above the stage: no ruby,
+       * emphasis, CJK–Latin autospacing and punctuation trimming.
+       */
+      .sample {
+        font-family: var(--serif);
+        font-size: clamp(26px, 2.8vw, 40px);
+        line-height: 2.1;
+        color: var(--ink);
+        max-height: 100%;
+        max-width: 100%;
+      }
+      .sample .meta {
+        font-family: var(--sans);
+        font-size: 0.42em;
+        color: var(--dim);
+        letter-spacing: 0.1em;
+        line-height: 2;
+      }
+      .sample.v {
+        writing-mode: vertical-rl;
+        height: 100%;
+        max-width: 100%;
+      }
+      .sample.h {
+        font-size: clamp(20px, 2.1vw, 30px);
+        line-height: 2;
+      }
+      .sample h5 {
+        font-size: 1.15em;
+        margin: 0 0 0 0.6em;
+        font-weight: 700;
+        color: var(--gold);
+      }
+      .sample.h h5 {
+        margin: 0 0 0.3em;
+      }
+      .sample p {
+        margin: 0;
+      }
+      .sample rt {
+        font-family: var(--sans);
+        font-size: 0.36em;
+        color: var(--cyan);
+        letter-spacing: 0;
+      }
+      .sample.noruby rt {
+        visibility: hidden;
+      }
+      .sample .em {
+        text-emphasis: none;
+      }
+      .sample.emph .em {
+        text-emphasis: filled dot var(--rose);
+        -webkit-text-emphasis: filled dot var(--rose);
+      }
+      .sample.h.emph .em {
+        text-emphasis-position: under right;
+      }
+      .sample .tcy {
+        text-combine-upright: all;
+        -webkit-text-combine: horizontal;
+      }
+      .sample.h .tcy {
+        text-combine-upright: none;
+      }
+      .sample .up {
+        text-orientation: upright;
+      }
+      .sample.auto {
+        text-autospace: normal;
+      }
+      .sample.noauto {
+        text-autospace: no-autospace;
+      }
+      .sample.trim {
+        text-spacing-trim: trim-start;
+      }
+      .sample.notrim {
+        text-spacing-trim: space-all;
+      }
+      .mong {
+        font-family: "Noto Sans Mongolian", "Mongolian Baiti", "Menk Qagan Tig", sans-serif;
+        writing-mode: vertical-lr;
+        font-size: clamp(30px, 3.4vw, 46px);
+        line-height: 1.9;
+        height: 100%;
+      }
+      .mong .lat {
+        font-family: var(--sans);
+        font-size: 0.55em;
+        color: var(--dim);
+      }
+      .arab {
+        font-family: "Noto Naskh Arabic", "Noto Sans Arabic", "Geeza Pro", "Amiri", serif;
+        font-size: clamp(30px, 3.4vw, 48px);
+        line-height: 1.9;
+        text-align: start;
+      }
+      .deva {
+        font-family: "Noto Sans Devanagari", "Noto Serif Devanagari", "Kohinoor Devanagari", sans-serif;
+        font-size: clamp(30px, 3.4vw, 46px);
+      }
+      .kor {
+        font-family: "Noto Serif CJK KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", serif;
+      }
+      .sample[lang="zh-Hans"] {
+        font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+      }
+      .jpn {
+        font-family: "Noto Serif CJK JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+      }
+      .scr .gloss {
+        margin: 14px 0 0;
+        color: var(--dim);
+        font: italic 15px/1.6 var(--serif);
+        max-width: 62ch;
+      }
+      .scr .ctrls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .codecard {
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: #03050b;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 300px;
+      }
+      .codecard header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        font: 12px var(--mono);
+        color: var(--dim);
+      }
+      .codecard header i {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--faint);
+        margin-right: 5px;
+      }
+      #code {
+        margin: 0;
+        padding: 18px 18px;
+        font: 13px/1.75 var(--mono);
+        color: #c9d4ea;
+        white-space: pre-wrap;
+        flex: 1;
+        overflow: auto;
+      }
+      #code .p {
+        color: var(--cyan);
+      }
+      #code .v {
+        color: var(--gold);
+      }
+      #code .c {
+        color: #5b6a86;
+      }
+      #code .s {
+        color: var(--rose);
+      }
+      #code mark {
+        background: color-mix(in oklch, var(--gold) 25%, transparent);
+        color: inherit;
+        border-radius: 3px;
+        animation: flash 1.2s ease-out;
+      }
+      @keyframes flash {
+        from {
+          background: var(--gold);
+          color: #000;
+        }
+      }
+      .codecard footer {
+        padding: 12px 16px;
+        border-top: 1px solid var(--line);
+        font-size: 12.5px;
+        color: var(--dim);
+      }
+      .codecard footer b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      ::view-transition-old(stage),
+      ::view-transition-new(stage) {
+        animation-duration: 0.7s;
+        animation-timing-function: cubic-bezier(0.6, 0, 0.2, 1);
+      }
+      ::view-transition-old(stage) {
+        animation-name: vt-out;
+      }
+      ::view-transition-new(stage) {
+        animation-name: vt-in;
+      }
+      @keyframes vt-out {
+        to {
+          opacity: 0;
+          filter: blur(10px);
+          transform: rotate(-6deg) scale(0.92);
+        }
+      }
+      @keyframes vt-in {
+        from {
+          opacity: 0;
+          filter: blur(10px);
+          transform: rotate(6deg) scale(1.06);
+        }
+      }
+
+      /* ========== ACCESS ========== */
+      .vis {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 28px 0 30px;
+        position: sticky;
+        top: 14px;
+        z-index: 20;
+        padding: 10px;
+        border-radius: 999px;
+        background: #05070dcc;
+        backdrop-filter: blur(10px);
+        width: max-content;
+        max-width: 100%;
+        border: 1px solid var(--line);
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+      .swatches div {
+        height: 92px;
+        border-radius: 14px;
+        display: flex;
+        align-items: flex-end;
+        padding: 10px 12px;
+        font: 11px var(--mono);
+        color: #000a;
+      }
+      .a11y {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 24px;
+      }
+      @media (max-width: 980px) {
+        .a11y {
+          grid-template-columns: 1fr;
+        }
+      }
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 24px;
+        background: var(--bg2);
+      }
+      .panel h3 {
+        margin: 0 0 4px;
+        font-size: 20px;
+        font-family: var(--serif);
+      }
+      .panel .sub {
+        color: var(--dim);
+        font-size: 13px;
+        margin: 0 0 18px;
+      }
+      .pickers {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .pickers label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: 12px var(--mono);
+        color: var(--dim);
+      }
+      input[type="color"] {
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 3px;
+        background: transparent;
+        cursor: pointer;
+      }
+      #preview {
+        margin: 18px 0;
+        border-radius: 14px;
+        padding: 22px 24px;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+      #preview .l {
+        font: 700 28px/1.3 var(--serif);
+      }
+      #preview .s {
+        font-size: 14px;
+        margin-top: 6px;
+      }
+      .ratio {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      #ratio {
+        font: 600 56px/1 var(--serif);
+      }
+      .badges {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .badges span {
+        font: 11.5px var(--mono);
+        padding: 3px 10px;
+        border-radius: 99px;
+        border: 1px solid;
+      }
+      .badges .pass {
+        color: var(--green);
+        border-color: var(--green);
+      }
+      .badges .fail {
+        color: var(--rose);
+        border-color: var(--rose);
+        text-decoration: line-through;
+      }
+      #tree {
+        margin: 0;
+        padding: 14px 16px;
+        background: #000;
+        border-radius: 12px;
+        font: 12.5px/1.8 var(--mono);
+        height: 300px;
+        overflow: auto;
+        color: #9fb0cc;
+        list-style: none;
+      }
+      #tree li {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #tree .r {
+        color: var(--gold);
+      }
+      #tree .n {
+        color: var(--ink);
+      }
+      #tree li.speaking {
+        background: color-mix(in oklch, var(--cyan) 22%, transparent);
+        color: #fff;
+      }
+
+      /* ========== FINALE ========== */
+      #finale {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        overflow: hidden;
+      }
+      #finale::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        background: conic-gradient(
+          from var(--angle) at 50% 60%,
+          transparent,
+          color-mix(in oklch, var(--w3c) 40%, transparent),
+          transparent 30%,
+          color-mix(in oklch, var(--cyan) 20%, transparent),
+          transparent 60%
+        );
+        animation: spin 18s linear infinite;
+        filter: blur(60px);
+        opacity: 0.6;
+      }
+      #finale blockquote {
+        position: relative;
+        margin: 0;
+        font-family: var(--serif);
+        font-size: clamp(44px, 8vw, 128px);
+        line-height: 1.05;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      #finale blockquote span {
+        display: block;
+        font-size: 0.3em;
+        font-weight: 400;
+        color: var(--dim);
+        margin-top: 0.7em;
+        letter-spacing: 0.05em;
+      }
+      #finale .cite {
+        position: relative;
+        font: 12px var(--mono);
+        color: var(--dim);
+        letter-spacing: 0.2em;
+        margin-top: 28px;
+      }
+      #finale .tally {
+        position: relative;
+        margin: 56px auto 0;
+        max-width: 720px;
+        color: var(--dim);
+      }
+      #finale .tally b {
+        color: var(--ink);
+      }
+      #finale .row {
+        position: relative;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+      footer.colophon {
+        padding: 40px clamp(20px, 6vw, 96px) 110px;
+        border-top: 1px solid var(--line);
+        color: var(--dim);
+        font-size: 12.5px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <filter id="f-protan">
+        <feColorMatrix
+          type="matrix"
+          values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"
+        />
+      </filter>
+      <filter id="f-deutan">
+        <feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0" />
+      </filter>
+      <filter id="f-tritan">
+        <feColorMatrix
+          type="matrix"
+          values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"
+        />
+      </filter>
+      <filter id="f-achroma">
+        <feColorMatrix
+          type="matrix"
+          values="0.299 0.587 0.114 0 0  0.299 0.587 0.114 0 0  0.299 0.587 0.114 0 0  0 0 0 1 0"
+        />
+      </filter>
+    </svg>
+    <div id="progress" aria-hidden="true"></div>
+    <nav id="nav" aria-label="Sections">
+      <a href="#hero"><span>Intro</span><i></i></a>
+      <a href="#manifesto"><span>Manifesto</span><i></i></a>
+      <a href="#history"><span>30 Years</span><i></i></a>
+      <a href="#galaxy"><span>Spec Galaxy</span><i></i></a>
+      <a href="#scripts"><span>Scripts</span><i></i></a>
+      <a href="#access"><span>Other Eyes</span><i></i></a>
+      <a href="#finale"><span>For Everyone</span><i></i></a>
+    </nav>
+    <main id="page">
+      <!-- Hero: WebGL particles morphing between words. -->
+      <section id="hero" aria-label="Intro">
+        <h1>Made of Standards</h1>
+        <canvas id="gl" aria-hidden="true"></canvas>
+        <div class="hud" aria-hidden="true">
+          <div>MADE OF STANDARDS<br /><span style="color: var(--cyan)">An interactive exhibit</span></div>
+          <div class="tr">W3C · 1994</div>
+          <div class="bl">Move your pointer · stir the particles</div>
+          <div class="br" id="pcount"></div>
+        </div>
+        <div id="caption" aria-live="polite"><div class="y" id="capY">1991</div><div class="t" id="capT">The first website · info.cern.ch</div></div>
+        <div class="scroll" aria-hidden="true">SCROLL</div>
+      </section>
+
+      <!-- Manifesto: the premise of the page, plus the counters. -->
+      <section id="manifesto" aria-labelledby="m-h">
+        <p class="big reveal" id="m-h">Every pixel you see, every note you hear, every script you read on this page
+          <span class="hl">comes from a published, open standard</span>. Switch one off, and you’ll see
+          exactly what it does.</p>
+        <div class="side reveal">
+          <div class="kicker">How to look</div>
+          Press <b style="color: var(--cyan)">What if there were no standards?</b> at the bottom of the
+          screen. Turn any standard off and watch this page change, then bring it back.
+        </div>
+        <div class="stats reveal">
+          <div><b>1994</b><span>W3C founded at MIT</span></div>
+          <div><b>26</b><span>milestones on the timeline</span></div>
+          <div><b id="statGalaxy">0</b><span>W3C specs in the galaxy</span></div>
+          <div><b>5</b><span>standards you can switch off</span></div>
+          <div><b>0</b><span>libraries · one HTML file</span></div>
+        </div>
+      </section>
+
+      <!-- Timeline: 26 milestones, each one a bar of synthesized music. -->
+      <section id="history" aria-labelledby="h-h">
+        <header class="reveal">
+          <div class="kicker">01 · Listen to the Web</div>
+          <h2 id="h-h">Thirty years, played as music<span class="en">Web Audio API</span></h2>
+          <p class="lede">Every milestone is one bar of music, and <b>the instrument changes with the era</b>: 8-bit
+            chiptune for the ’90s, FM bells for the 2000s, synth pads and drums for the 2010s, an ambient mix
+            with reverb for today. No samples — every sound is synthesized live in your browser.</p>
+        </header>
+        <div class="tl-controls">
+          <button class="btn" id="play" type="button">▶ Play the history of the Web</button>
+          <button class="btn" id="prev" type="button" aria-label="Previous">←</button>
+          <button class="btn" id="next" type="button" aria-label="Next">→</button>
+          <span class="now mono" id="tlnow">Drag · swipe · or click any card to hear it</span>
+        </div>
+        <canvas id="scope" aria-hidden="true"></canvas>
+        <div id="track" role="list"></div>
+      </section>
+
+      <!-- Spec galaxy: a draggable 3D map of W3C specifications. -->
+      <section id="galaxy" aria-labelledby="g-h">
+        <header class="reveal">
+          <div class="kicker">02 · The Spec Galaxy</div>
+          <h2 id="g-h">Every star is a specification<span class="en">Canvas</span></h2>
+          <p class="lede">W3C standards, clustered by field. <b>Drag</b> to rotate, <b>hover</b> to read a name,
+            <b>click</b> a star to open the spec, or just search.</p>
+        </header>
+        <div class="gal-wrap reveal">
+          <canvas id="sky" aria-label="A star map of W3C specifications. Drag to rotate."></canvas>
+          <div class="gal-ui">
+            <input
+              id="q"
+              type="search"
+              placeholder="Search specs: CSS, ARIA, WebAuthn…"
+              aria-label="Search specifications"
+            />
+            <div class="legend" id="legend"></div>
+          </div>
+          <div id="tip"></div>
+          <div id="card" role="dialog" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- Writing systems: live vertical text, ruby and emphasis marks. -->
+      <section id="scripts" aria-labelledby="s-h">
+        <header class="reveal">
+          <div class="kicker">03 · One Web, Many Scripts</div>
+          <h2 id="s-h">Top to bottom<span class="en">CSS Writing Modes · CSS Ruby</span></h2>
+          <p class="lede">Vertical lines, pronunciation guides, emphasis marks: the way Chinese and Japanese have been
+            typeset for centuries. This is <b>live text, laid out by your browser</b> from W3C specs. Select
+            it, copy it, or let a screen reader read it aloud.</p>
+        </header>
+        <div class="scr">
+          <div>
+            <div class="tabs" role="tablist" aria-label="Writing systems" id="tabs"></div>
+            <div class="stagebox"><div id="stage"></div></div>
+            <div class="ctrls" id="ctrls"></div>
+            <p class="gloss" id="gloss"></p>
+          </div>
+          <div class="codecard">
+            <header><span><i></i><i></i><i></i></span><span id="codefile">clreq.css</span></header>
+            <pre id="code" aria-label="The CSS currently applied"></pre>
+            <footer id="codespec"></footer>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accessibility: vision filters, contrast lab and accessibility tree. -->
+      <section id="access" aria-labelledby="a-h">
+        <header class="reveal">
+          <div class="kicker">04 · Web for All</div>
+          <h2 id="a-h">See the Web through other eyes<span class="en">Accessibility is not a feature. It’s the foundation.</span></h2>
+          <p class="lede">The World Health Organization estimates that at least 2.2 billion people live with a vision
+            impairment. Press a button below and <b>this entire page</b> is re-rendered through an SVG filter.
+            Scroll back up and see what the galaxy looks like.</p>
+        </header>
+        <div class="vis" role="group" aria-label="Vision simulation" id="vis">
+          <button class="btn on" data-f="none" aria-pressed="true">Typical vision</button>
+          <button class="btn" data-f="protan" aria-pressed="false">Protanopia</button>
+          <button class="btn" data-f="deutan" aria-pressed="false">Deuteranopia</button>
+          <button class="btn" data-f="tritan" aria-pressed="false">Tritanopia</button>
+          <button class="btn" data-f="achroma" aria-pressed="false">Achromatopsia</button>
+          <button class="btn" data-f="blur" aria-pressed="false">Low vision</button>
+        </div>
+        <div class="swatches" aria-hidden="true">
+          <div style="background: #e5484d">#E5484D</div><div style="background: #30a46c">#30A46C</div><div style="background: #f5d90a">#F5D90A</div><div style="background: #0090ff">#0090FF</div><div style="background: #8e4ec6">#8E4EC6</div><div style="background: #f76b15">#F76B15</div>
+        </div>
+        <div class="a11y">
+          <div class="panel">
+            <h3>WCAG 2.2 contrast lab</h3>
+            <p class="sub">The relative-luminance formula straight from WCAG 2.2: (L1 + 0.05) / (L2 + 0.05)</p>
+            <div class="pickers">
+              <label>Text <input type="color" id="fg" value="#7c8aa5" /></label>
+              <label>Background <input type="color" id="bgc" value="#0a0f1c" /></label>
+              <button class="btn" id="fix" type="button">Fix to AA</button>
+              <button class="btn" id="rnd" type="button">Random colours</button>
+            </div>
+            <div id="preview"><div class="l">The Web is for everyone</div><div class="s">Body text needs a contrast ratio of at least 4.5 : 1 to pass WCAG AA.</div></div>
+            <div class="ratio"><span id="ratio">—</span><span class="mono" style="color: var(--dim)"> : 1 contrast</span></div>
+            <div class="badges" id="badges"></div>
+          </div>
+          <div class="panel">
+            <h3>This page, as a screen reader hears it</h3>
+            <p class="sub">A simplified accessibility tree, generated live from this page’s DOM and ARIA attributes. Press
+              “Read aloud” and the Web Speech API will speak it.</p>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap">
+              <button class="btn" id="speak" type="button">🔊 Read aloud</button>
+              <button class="btn" id="stop" type="button">Stop</button>
+            </div>
+            <ul id="tree" aria-label="Simplified accessibility tree"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Finale. -->
+      <section id="finale" aria-labelledby="f-h">
+        <div>
+          <blockquote id="f-h" class="reveal">This is for everyone<span>Every language. Every ability. Every device.</span></blockquote>
+          <!-- <div class="cite reveal">TIM BERNERS-LEE · LONDON 2012 OLYMPIC OPENING CEREMONY</div> -->
+          <p class="tally reveal">No frameworks, no plug-ins, no images.<br />Just <b>open standards</b>, which is why this one
+            file works on any computer, in any language, anywhere in the world.<br />Every one of them is
+            published openly: anyone can read it, implement it, and join the discussion.</p>
+          <div class="row reveal">
+            <button class="btn" id="killall" type="button">Switch every standard off</button>
+            <a
+              class="btn"
+              href="https://www.w3.org/TR/"
+              target="_blank"
+              rel="noopener"
+              style="text-decoration: none">Browse all W3C standards ↗</a>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- The footer is not currently shown:
+    <footer class="colophon">
+      <span>Made of Standards</span>
+      <span class="mono">HTML · CSS · SVG · WebGL · Web Audio · Web Speech · Unicode</span>
+    </footer>
+    -->
+    <script>
+      /*
+       * Made of Standards — all of the page's behaviour.
+       *
+       * Everything runs inside one closure so nothing leaks into the global
+       * scope. The single deliberate exception is window.__showTab, which the
+       * standards switchboard uses to jump to a writing-system example.
+       *
+       * The page is organised into independent sections:
+       *
+       *   1. Reveal on scroll and the section nav
+       *   2. Hero — particle text morph (WebGL, with a 2D-canvas fallback)
+       *   3. Timeline — cards and the Web Audio soundtrack
+       *   4. Galaxy — a 3D star map of W3C specifications
+       *   5. Scripts — live writing-mode samples and the CSS behind them
+       *   6. Accessibility — vision filters, contrast lab, accessibility tree
+       *   7. Switchboard — "what if there were no standards?"
+       *   8. Stat counters
+       */
+      (() => {
+        "use strict";
+
+        /* Shortcuts for querySelector / querySelectorAll. */
+        const $ = (selector, root = document) => root.querySelector(selector);
+        const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+        /** True when the visitor asked for reduced motion. */
+        const prefersReducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        /** True while the "Motion" standard is switched off. */
+        const isStill = () => document.documentElement.classList.contains("std-still");
+
+        /* ---------- Reveal on scroll + active nav dot ---------- */
+
+        const revealObserver = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add("in");
+              revealObserver.unobserve(entry.target); // animate each section once
+            }
+          },
+          { threshold: 0.15 },
+        );
+        $$(".reveal").forEach((element) => revealObserver.observe(element));
+
+        const navLinks = $$("#nav a");
+        const navObserver = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              const currentHash = `#${entry.target.id}`;
+              for (const link of navLinks) {
+                link.classList.toggle("cur", link.getAttribute("href") === currentHash);
+              }
+            }
+          },
+          { rootMargin: "-45% 0px -50% 0px" },
+        );
+        $$("main > section").forEach((section) => navObserver.observe(section));
+
+        /* ================= HERO: particle text morph ================= */
+        /*
+         * Thousands of particles drift around the hero. Each one is assigned a
+         * target point sampled from a word ("W3C", "Made of Standards", …) and
+         * springs towards it, so switching words looks like the particles
+         * rearranging themselves. Rendered with WebGL, falling back to 2D canvas.
+         */
+        (function hero() {
+          const canvas = $("#gl");
+          const heroSection = $("#hero");
+
+          /* Words the particles morph between, cycled every 5.2s. */
+          const SHAPES = [
+            {
+              text: "info.cern.ch",
+              font: "600 {s}px " + getComputedStyle(document.body).getPropertyValue("--mono"),
+              year: "1991",
+              caption: "The first website · info.cern.ch",
+              palette: [
+                [0.55, 0.75, 1],
+                [0.9, 0.95, 1],
+              ],
+            },
+            {
+              text: "W3C",
+              font: '800 {s}px "Helvetica Neue",Arial,sans-serif',
+              year: "1994",
+              caption: "The World Wide Web Consortium is founded",
+              palette: [
+                [0, 0.45, 0.85],
+                [0.4, 0.85, 1],
+              ],
+            },
+            {
+              text: "Made of Standards",
+              font: '700 {s}px "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif',
+              year: "NOW",
+              caption: "Today · this page, built entirely from open standards",
+              palette: [
+                [0.35, 0.85, 1],
+                [1, 0.82, 0.4],
+              ],
+            },
+            {
+              text: "for everyone",
+              font: 'italic 700 {s}px Georgia,"Times New Roman",serif',
+              year: "2012",
+              caption: "“This is for everyone.” — Tim Berners-Lee",
+              palette: [
+                [1, 0.8, 0.45],
+                [1, 0.55, 0.5],
+              ],
+            },
+          ];
+
+          let width = 0;
+          let height = 0;
+          const pixelRatio = Math.min(devicePixelRatio || 1, 2);
+
+          /* Fewer particles on small screens keeps the animation smooth. */
+          const compactLayout = innerWidth < 700;
+          const textParticleCount = compactLayout ? 3200 : 7600;
+          const dustParticleCount = compactLayout ? 500 : 1200;
+          const particleCount = textParticleCount + dustParticleCount;
+
+          /* Particle state, stored in flat typed arrays for speed:
+             particles = [x, y, vx, vy] per particle, targets = [x, y] per text particle,
+             colors = [r, g, b] per particle, sizes = radius per particle. */
+          const particles = new Float32Array(particleCount * 4);
+          const targets = new Float32Array(textParticleCount * 2);
+          const colors = new Float32Array(particleCount * 3);
+          const targetColors = new Float32Array(particleCount * 3);
+          const sizes = new Float32Array(particleCount);
+          /* GPU vertex buffer: x, y, size, r, g, b, alpha per particle. */
+          const vertexData = new Float32Array(particleCount * 7);
+
+          const pointer = { x: -1e4, y: -1e4, active: false };
+          let shapeIndex = -1;
+          let heroVisible = true;
+          let lastFrameTime = performance.now();
+          let shapeTimer = 0;
+
+          let gl = null;
+          let ctx2d = null;
+          let program = null;
+          const uniforms = {};
+
+          /* ---------- Drawing the words into a hidden canvas ---------- */
+
+          /**
+           * Render `shape.text` offscreen and return the x/y coordinates of its
+           * opaque pixels, roughly one point per text particle.
+           */
+          function sampleTextPixels(shape) {
+            const canvasWidth = Math.floor(width);
+            const canvasHeight = Math.floor(height);
+            const offscreen = document.createElement("canvas");
+            offscreen.width = canvasWidth;
+            offscreen.height = canvasHeight;
+            const context = offscreen.getContext("2d", { willReadFrequently: true });
+
+            // Size the text so it spans at most 84% of the hero width.
+            let fontSize = Math.min(canvasHeight * 0.3, 320);
+            context.font = shape.font.replace("{s}", fontSize);
+            const textWidth = context.measureText(shape.text).width;
+            if (textWidth > canvasWidth * 0.84) {
+              fontSize *= (canvasWidth * 0.84) / textWidth;
+              context.font = shape.font.replace("{s}", fontSize);
+            }
+
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.fillStyle = "#fff";
+            context.fillText(shape.text, canvasWidth / 2, canvasHeight * 0.44);
+
+            const pixels = context.getImageData(0, 0, canvasWidth, canvasHeight).data;
+            const points = [];
+
+            // Count opaque pixels (sampled every second pixel) to choose a grid step.
+            let opaquePixels = 0;
+            for (let y = 0; y < canvasHeight; y += 2) {
+              for (let x = 0; x < canvasWidth; x += 2) {
+                if (pixels[(y * canvasWidth + x) * 4 + 3] > 128) opaquePixels++;
+              }
+            }
+
+            const step = Math.max(1.5, 2 * Math.sqrt(opaquePixels / (textParticleCount * 0.92)));
+            for (let y = 0; y < canvasHeight; y += step)
+              for (let x = 0; x < canvasWidth; x += step) {
+                // Jitter each sample slightly so the result doesn't look like a grid.
+                const px = Math.floor(x + (Math.random() - 0.5) * step * 0.6);
+                const py = Math.floor(y + (Math.random() - 0.5) * step * 0.6);
+                if (px >= 0 && py >= 0 && px < canvasWidth && py < canvasHeight) {
+                  if (pixels[(py * canvasWidth + px) * 4 + 3] > 128) points.push(px, py);
+                }
+              }
+
+            if (!points.length) points.push(canvasWidth / 2, canvasHeight / 2);
+            return points;
+          }
+
+          /** Point every text particle at a new shape and give it a small burst. */
+          function morphToShape(index, burst = true) {
+            shapeIndex = index;
+            const shape = SHAPES[index];
+            const points = sampleTextPixels(shape);
+            const pointCount = points.length / 2;
+
+            // Shuffle the particle order so neighbouring particles don't move together.
+            const order = [...Array(textParticleCount).keys()];
+            for (let i = textParticleCount - 1; i > 0; i--) {
+              const j = (Math.random() * (i + 1)) | 0;
+              [order[i], order[j]] = [order[j], order[i]];
+            }
+
+            for (let i = 0; i < textParticleCount; i++) {
+              const particle = order[i];
+              const point = i % pointCount;
+              targets[particle * 2] = points[point * 2] + (i >= pointCount ? (Math.random() - 0.5) * 3 : 0);
+              targets[particle * 2 + 1] =
+                points[point * 2 + 1] + (i >= pointCount ? (Math.random() - 0.5) * 3 : 0);
+
+              // Blend the two palette colours by horizontal position.
+              const mix = Math.min(
+                1,
+                Math.max(0, targets[particle * 2] / width + (Math.random() - 0.5) * 0.3),
+              );
+              for (let channel = 0; channel < 3; channel++) {
+                targetColors[particle * 3 + channel] =
+                  shape.palette[0][channel] * (1 - mix) + shape.palette[1][channel] * mix;
+              }
+
+              if (burst && !prefersReducedMotion) {
+                particles[particle * 4 + 2] += (Math.random() - 0.5) * 14;
+                particles[particle * 4 + 3] += (Math.random() - 0.5) * 14;
+              }
+            }
+
+            $("#capY").textContent = shape.year;
+            const caption = $("#capT");
+            caption.style.opacity = 0;
+            setTimeout(() => {
+              caption.textContent = shape.caption;
+              caption.style.opacity = 1;
+            }, 250);
+          }
+
+          function resizeCanvas() {
+            const bounds = heroSection.getBoundingClientRect();
+            width = bounds.width;
+            height = bounds.height;
+            canvas.width = width * pixelRatio;
+            canvas.height = height * pixelRatio;
+            if (gl) gl.viewport(0, 0, canvas.width, canvas.height);
+            if (shapeIndex >= 0) morphToShape(shapeIndex, false);
+          }
+
+          /* ---------- WebGL setup (with a 2D-canvas fallback) ---------- */
+
+          const VERTEX_SHADER = `
+            attribute vec2 aPosition;
+            attribute float aSize;
+            attribute vec4 aColor;
+            uniform vec2 uResolution;
+            uniform float uPixelRatio;
+            varying vec4 vColor;
+
+            void main() {
+              vec2 clip = aPosition / uResolution * 2.0 - 1.0;
+              gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+              gl_PointSize = aSize * uPixelRatio;
+              vColor = aColor;
+            }`;
+
+          const FRAGMENT_SHADER = `
+            precision mediump float;
+            varying vec4 vColor;
+
+            void main() {
+              // Soft, round particle: brightest in the centre.
+              float distanceFromCentre = length(gl_PointCoord - 0.5);
+              float alpha = smoothstep(0.5, 0.0, distanceFromCentre);
+              alpha = alpha * alpha;
+              gl_FragColor = vec4(vColor.rgb, vColor.a * alpha);
+            }`;
+
+          try {
+            gl = canvas.getContext("webgl", { premultipliedAlpha: false, antialias: false, alpha: true });
+          } catch (error) {
+            gl = null;
+          }
+
+          if (gl) {
+            const compileShader = (type, source) => {
+              const shader = gl.createShader(type);
+              gl.shaderSource(shader, source);
+              gl.compileShader(shader);
+              return shader;
+            };
+            program = gl.createProgram();
+            gl.attachShader(program, compileShader(gl.VERTEX_SHADER, VERTEX_SHADER));
+            gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+              gl = null; // fall back to 2D canvas below
+            }
+          }
+
+          if (gl) {
+            gl.useProgram(program);
+            const vertexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertexData.byteLength, gl.DYNAMIC_DRAW);
+
+            const attributeLocation = (name) => gl.getAttribLocation(program, name);
+            const positionAttribute = attributeLocation("aPosition");
+            const sizeAttribute = attributeLocation("aSize");
+            const colorAttribute = attributeLocation("aColor");
+
+            // Stride is 7 floats: x, y, size, r, g, b, alpha.
+            const STRIDE = 28;
+            gl.enableVertexAttribArray(positionAttribute);
+            gl.vertexAttribPointer(positionAttribute, 2, gl.FLOAT, false, STRIDE, 0);
+            gl.enableVertexAttribArray(sizeAttribute);
+            gl.vertexAttribPointer(sizeAttribute, 1, gl.FLOAT, false, STRIDE, 8);
+            gl.enableVertexAttribArray(colorAttribute);
+            gl.vertexAttribPointer(colorAttribute, 4, gl.FLOAT, false, STRIDE, 12);
+
+            uniforms.resolution = gl.getUniformLocation(program, "uResolution");
+            uniforms.pixelRatio = gl.getUniformLocation(program, "uPixelRatio");
+
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+            gl.clearColor(0, 0, 0, 0);
+          } else {
+            ctx2d = canvas.getContext("2d");
+          }
+
+          resizeCanvas();
+
+          /* Scatter the particles, then pull them into the first shape. */
+          for (let i = 0; i < particleCount; i++) {
+            particles[i * 4] = Math.random() * width;
+            particles[i * 4 + 1] = Math.random() * height;
+            sizes[i] = i < textParticleCount ? 1.2 + Math.random() * 2.2 : 0.8 + Math.random() * 1.8;
+            for (let channel = 0; channel < 3; channel++) {
+              colors[i * 3 + channel] = i < textParticleCount ? 0.6 : 0.5 + Math.random() * 0.4;
+              targetColors[i * 3 + channel] = colors[i * 3 + channel];
+            }
+          }
+          morphToShape(0, false);
+          if (prefersReducedMotion) {
+            // Start already assembled: no morph animation for reduced motion.
+            for (let i = 0; i < textParticleCount; i++) {
+              particles[i * 4] = targets[i * 2];
+              particles[i * 4 + 1] = targets[i * 2 + 1];
+            }
+          }
+
+          let resizeTimer = 0;
+          addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 150);
+          });
+
+          heroSection.addEventListener("pointermove", (event) => {
+            const bounds = heroSection.getBoundingClientRect();
+            pointer.x = event.clientX - bounds.left;
+            pointer.y = event.clientY - bounds.top;
+            pointer.active = true;
+          });
+          heroSection.addEventListener("pointerleave", () => {
+            pointer.active = false;
+            pointer.x = pointer.y = -1e4;
+          });
+          heroSection.addEventListener("click", () => morphToShape((shapeIndex + 1) % SHAPES.length));
+
+          new IntersectionObserver((entries) => (heroVisible = entries[0].isIntersecting)).observe(
+            heroSection,
+          );
+
+          $("#pcount").textContent =
+            particleCount.toLocaleString() + " particles · " + (gl ? "WebGL" : "Canvas");
+
+          /* ---------- Animation loop ---------- */
+
+          function animate(now) {
+            requestAnimationFrame(animate);
+            if (!heroVisible || document.hidden || isStill()) {
+              lastFrameTime = now;
+              return;
+            }
+
+            const delta = Math.min(50, now - lastFrameTime);
+            lastFrameTime = now;
+
+            // Advance to the next shape every 5.2 seconds.
+            shapeTimer += delta;
+            if (shapeTimer > 5200) {
+              shapeTimer = 0;
+              morphToShape((shapeIndex + 1) % SHAPES.length);
+            }
+
+            const timeScale = delta / 16.7; // 1 at 60fps
+            const pointerRadius = 110;
+            const time = now * 0.001;
+
+            for (let i = 0; i < particleCount; i++) {
+              const offset = i * 4;
+              let x = particles[offset];
+              let y = particles[offset + 1];
+              let vx = particles[offset + 2];
+              let vy = particles[offset + 3];
+
+              if (i < textParticleCount) {
+                // Spring towards the sampled text position, with a gentle wobble.
+                const targetX = targets[i * 2] + Math.sin(time * 1.3 + i) * 0.6;
+                const targetY = targets[i * 2 + 1] + Math.cos(time * 1.1 + i * 1.7) * 0.6;
+                vx += (targetX - x) * 0.018 * timeScale;
+                vy += (targetY - y) * 0.018 * timeScale;
+                vx *= Math.pow(0.86, timeScale);
+                vy *= Math.pow(0.86, timeScale);
+              } else {
+                // Dust drifts upwards and wraps around at the top.
+                vx += Math.sin(time * 0.3 + i) * 0.004 * timeScale;
+                vy -= 0.006 * timeScale;
+                vx *= 0.99;
+                vy *= 0.99;
+                if (y < -10) {
+                  y = height + 10;
+                  x = Math.random() * width;
+                }
+              }
+
+              // The pointer pushes nearby particles away.
+              if (pointer.active) {
+                const dx = x - pointer.x;
+                const dy = y - pointer.y;
+                const distanceSquared = dx * dx + dy * dy;
+                if (distanceSquared < pointerRadius * pointerRadius) {
+                  const distance = Math.sqrt(distanceSquared) + 0.01;
+                  const force = ((pointerRadius - distance) / pointerRadius) * 2.6 * timeScale;
+                  vx += (dx / distance) * force;
+                  vy += (dy / distance) * force;
+                }
+              }
+
+              x += vx * timeScale;
+              y += vy * timeScale;
+              particles[offset] = x;
+              particles[offset + 1] = y;
+              particles[offset + 2] = vx;
+              particles[offset + 3] = vy;
+
+              const vertexOffset = i * 7;
+              const colorOffset = i * 3;
+              for (let channel = 0; channel < 3; channel++) {
+                colors[colorOffset + channel] +=
+                  (targetColors[colorOffset + channel] - colors[colorOffset + channel]) * 0.05;
+              }
+              const speed = Math.min(1, Math.hypot(vx, vy) * 0.15);
+
+              // Pack x, y, size, r, g, b, alpha for the GPU (or the 2D fallback).
+              vertexData[vertexOffset] = x;
+              vertexData[vertexOffset + 1] = y;
+              vertexData[vertexOffset + 2] = sizes[i] * (i < textParticleCount ? 2.6 : 2) + speed * 2;
+              vertexData[vertexOffset + 3] = colors[colorOffset] + speed * 0.3;
+              vertexData[vertexOffset + 4] = colors[colorOffset + 1] + speed * 0.2;
+              vertexData[vertexOffset + 5] = colors[colorOffset + 2];
+              vertexData[vertexOffset + 6] = i < textParticleCount ? 0.75 : 0.18 + 0.12 * Math.sin(time + i);
+            }
+
+            if (gl) {
+              gl.clear(gl.COLOR_BUFFER_BIT);
+              gl.uniform2f(uniforms.resolution, width, height);
+              gl.uniform1f(uniforms.pixelRatio, pixelRatio);
+              gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertexData);
+              gl.drawArrays(gl.POINTS, 0, particleCount);
+            } else {
+              ctx2d.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+              ctx2d.clearRect(0, 0, width, height);
+              for (let i = 0; i < particleCount; i++) {
+                const vertexOffset = i * 7;
+                ctx2d.fillStyle = `rgba(${(vertexData[vertexOffset + 3] * 255) | 0},${(vertexData[vertexOffset + 4] * 255) | 0},${(vertexData[vertexOffset + 5] * 255) | 0},${vertexData[vertexOffset + 6]})`;
+                const size = vertexData[vertexOffset + 2] * 0.45;
+                ctx2d.fillRect(
+                  vertexData[vertexOffset] - size / 2,
+                  vertexData[vertexOffset + 1] - size / 2,
+                  size,
+                  size,
+                );
+              }
+            }
+          }
+
+          requestAnimationFrame(animate);
+
+          heroSection.style.background = "radial-gradient(ellipse at 50% 45%,#0b1a33 0%,#05070d 65%)";
+        })();
+
+        /* ================= TIMELINE + WEB AUDIO ================= */
+        /*
+         * Every milestone is one bar of music, typed with the Web Audio API.
+         * The instrumentation changes with the era, so playing the timeline
+         * walks you through 35 years of sound: chiptune, FM, synth pop, ambient.
+         */
+
+        const CATEGORIES = {
+          found: { label: "FOUNDING", color: "oklch(85% 0.14 85)" },
+          markup: { label: "MARKUP", color: "oklch(68% 0.16 245)" },
+          css: { label: "CSS", color: "oklch(84% 0.13 205)" },
+          a11y: { label: "ACCESS", color: "oklch(80% 0.17 150)" },
+          i18n: { label: "I18N", color: "oklch(72% 0.17 15)" },
+          media: { label: "MEDIA", color: "oklch(75% 0.15 300)" },
+          sec: { label: "IDENTITY", color: "oklch(78% 0.15 55)" },
+          now: { label: "NOW", color: "oklch(84% 0.13 205)" },
+        };
+
+        /*
+         * One entry per milestone; the timeline cards and the soundtrack share it.
+         * `month` is a two-digit number, or "··" for the final NOW entry.
+         */
+        const MILESTONES = [
+          {
+            year: "1989",
+            month: "03",
+            category: "found",
+            title: "A proposal, “vague but exciting”",
+            text: "Tim Berners-Lee submits “Information Management: A Proposal” at CERN. His boss scribbles on the cover: “Vague but exciting.”",
+          },
+          {
+            year: "1991",
+            month: "08",
+            category: "markup",
+            title: "The first website goes live",
+            text: "info.cern.ch explains to the world what the World Wide Web is. You can still visit it today.",
+          },
+          {
+            year: "1994",
+            month: "10",
+            category: "found",
+            title: "W3C is founded",
+            text: "The World Wide Web Consortium is born at MIT, with a mission to lead the Web to its full potential.",
+          },
+          {
+            year: "1996",
+            month: "12",
+            category: "css",
+            title: "CSS1 becomes a Recommendation",
+            text: "For the first time, content and presentation part ways: structure goes to HTML, style goes to CSS.",
+          },
+          {
+            year: "1997",
+            month: "01",
+            category: "markup",
+            title: "HTML 3.2",
+            text: "The first version of HTML published as a W3C Recommendation.",
+          },
+          {
+            year: "1998",
+            month: "02",
+            category: "markup",
+            title: "XML 1.0",
+            text: "A meta-language for describing data, and the foundation of countless formats since.",
+          },
+          {
+            year: "1998",
+            month: "05",
+            category: "css",
+            title: "CSS2",
+            text: "Positioning, z-index, media types and bidirectional text.",
+          },
+          {
+            year: "1999",
+            month: "05",
+            category: "a11y",
+            title: "WCAG 1.0",
+            text: "The first Web Content Accessibility Guidelines. The Web starts designing for everyone.",
+          },
+          {
+            year: "1999",
+            month: "12",
+            category: "markup",
+            title: "HTML 4.01",
+            text: "The version of HTML that ran the Web for more than a decade.",
+          },
+          {
+            year: "2001",
+            month: "09",
+            category: "media",
+            title: "SVG 1.0",
+            text: "Vector graphics become native to the Web: scalable, searchable, scriptable.",
+          },
+          {
+            year: "2008",
+            month: "12",
+            category: "a11y",
+            title: "WCAG 2.0",
+            text: "Perceivable, Operable, Understandable, Robust",
+          },
+          {
+            year: "2009",
+            month: "06",
+            category: "i18n",
+            title: "Japanese layout requirements",
+            text: "Centuries of Japanese typesetting craft, written down as requirements the Web can implement.",
+          },
+          {
+            year: "2011",
+            month: "06",
+            category: "css",
+            title: "CSS 2.1",
+            text: "Thirteen years in the making, the bedrock of modern CSS reaches Recommendation.",
+          },
+          {
+            year: "2014",
+            month: "03",
+            category: "a11y",
+            title: "WAI-ARIA 1.0",
+            text: "Dynamic web apps become understandable to assistive technologies.",
+          },
+          {
+            year: "2014",
+            month: "10",
+            category: "markup",
+            title: "HTML5",
+            text: "Video, audio, canvas and semantic elements: the Web becomes an application platform.",
+          },
+          {
+            year: "2015",
+            month: "07",
+            category: "i18n",
+            title: "Chinese layout requirements",
+            text: "Chinese typography enters Web standards.",
+          },
+          {
+            year: "2018",
+            month: "06",
+            category: "a11y",
+            title: "WCAG 2.1",
+            text: "New success criteria for mobile, low vision and cognitive disabilities.",
+          },
+          {
+            year: "2019",
+            month: "03",
+            category: "sec",
+            title: "WebAuthn",
+            text: "Sign in without a password. Today’s passkeys are built on it.",
+          },
+          {
+            year: "2019",
+            month: "12",
+            category: "media",
+            title: "WebAssembly 1.0",
+            text: "After HTML, CSS and JavaScript, the Web gets a fourth language.",
+          },
+          {
+            year: "2021",
+            month: "01",
+            category: "media",
+            title: "WebRTC 1.0",
+            text: "Real-time audio and video between browsers. No plug-ins required.",
+          },
+          {
+            year: "2021",
+            month: "06",
+            category: "media",
+            title: "Web Audio API",
+            text: "Every sound in this section is synthesized by it, live.",
+          },
+          {
+            year: "2023",
+            month: "01",
+            category: "found",
+            title: "W3C becomes a public-interest non-profit",
+            text: "The biggest change to its governance in almost thirty years.",
+          },
+          {
+            year: "2023",
+            month: "10",
+            category: "a11y",
+            title: "WCAG 2.2",
+            text: "New criteria for focus visibility, dragging movements, target size and accessible authentication.",
+          },
+          {
+            year: "2024",
+            month: "12",
+            category: "media",
+            title: "WebGPU Candidate Recommendation",
+            text: "The next-generation graphics and compute API for the Web.",
+          },
+          {
+            year: "2025",
+            month: "05",
+            category: "sec",
+            title: "Verifiable Credentials 2.0",
+            text: "Digital credentials that can be cryptographically verified while protecting privacy.",
+          },
+          {
+            year: "NOW",
+            month: "··",
+            category: "now",
+            title: "The page you are looking at",
+            text: "Built from all of the above, and many more. Try “What if there were no standards?” at the bottom of the screen.",
+          },
+        ];
+
+        const MONTHS = [
+          "",
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+
+        /* Each era gets its own instrumentation and spectrum colour. */
+        const ERAS = [
+          {
+            name: "1989–1999 · 8-bit",
+            description: "square-wave arpeggios · triangle bass · noise hats",
+            color: "#ffd27a",
+          },
+          {
+            name: "2000–2013 · FM synthesis",
+            description: "FM bells · kick drum · filtered saw bass",
+            color: "#ff9a8b",
+          },
+          {
+            name: "2014–2020 · Synth pop",
+            description: "detuned saw pads · filter sweeps · full drum kit",
+            color: "#b48cff",
+          },
+          {
+            name: "2021–now · Ambient",
+            description: "lush pads · ping-pong delay · convolution reverb",
+            color: "#5fd4ff",
+          },
+          {
+            name: "NOW · Everything at once",
+            description: "all layers · one last chord",
+            color: "#5ee39a",
+          },
+        ];
+
+        /**
+         * Which era a milestone belongs to (0–4); 4 is the "NOW" finale.
+         */
+        function eraForMilestone(milestone) {
+          if (milestone.year === "NOW") return 4;
+          const year = +milestone.year;
+          if (year < 2000) return 0;
+          if (year < 2014) return 1;
+          if (year < 2021) return 2;
+          return 3;
+        }
+
+        (function timeline() {
+          const track = $("#track");
+          track.innerHTML = MILESTONES.map((milestone, index) => {
+            const category = CATEGORIES[milestone.category];
+            const finalClass = milestone.category === "now" ? " final" : "";
+            const month = milestone.month === "··" ? "" : MONTHS[+milestone.month].toUpperCase();
+            return `<article class="ms${finalClass}" role="listitem" data-i="${index}" style="--k:${category.color}"><span class="cat">${category.label}</span><div><span class="yr">${milestone.year}</span><span class="mo">${month}</span></div><h4>${milestone.title}</h4><p>${milestone.text}</p></article>`;
+          }).join("");
+          const cards = $$(".ms", track);
+
+          /* ---------- Audio graph ---------- */
+
+          let audioContext = null;
+          let masterGain;
+          let analyser;
+          let reverb;
+          let delayLeft;
+          let noiseBuffer;
+          let currentIndex = -1;
+          let currentEra = -1;
+          let playing = false;
+          let nextScheduleTime = 0;
+          let nextMilestoneIndex = 0;
+          let scheduler = null;
+
+          const BAR_DURATION = 1.0;
+          const SIXTEENTH = BAR_DURATION / 8;
+
+          /** Create the audio graph on first use (browsers require a gesture). */
+          function ensureAudio() {
+            if (audioContext) return true;
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return false;
+            audioContext = new AudioContextClass();
+
+            // Master chain: gain → compressor → analyser → speakers.
+            const compressor = audioContext.createDynamicsCompressor();
+            compressor.threshold.value = -16;
+            compressor.ratio.value = 3.5;
+            compressor.attack.value = 0.005;
+            compressor.release.value = 0.2;
+            masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.55;
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            analyser.smoothingTimeConstant = 0.78;
+            masterGain.connect(compressor);
+            compressor.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            // A generated stereo impulse response gives the ambient era its reverb.
+            const impulseLength = audioContext.sampleRate * 3;
+            const impulse = audioContext.createBuffer(2, impulseLength, audioContext.sampleRate);
+            for (let channel = 0; channel < 2; channel++) {
+              const data = impulse.getChannelData(channel);
+              for (let i = 0; i < impulseLength; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / impulseLength, 3.2);
+              }
+            }
+            reverb = audioContext.createConvolver();
+            reverb.buffer = impulse;
+            const reverbGain = audioContext.createGain();
+            reverbGain.gain.value = 0.7;
+            reverb.connect(reverbGain);
+            reverbGain.connect(masterGain);
+
+            // Ping-pong delay: the left and right taps feed each other.
+            delayLeft = audioContext.createDelay(1);
+            const delayRight = audioContext.createDelay(1);
+            delayLeft.delayTime.value = BAR_DURATION * 0.375;
+            delayRight.delayTime.value = BAR_DURATION * 0.375;
+            const feedback = audioContext.createGain();
+            feedback.gain.value = 0.42;
+            const leftPanner = audioContext.createStereoPanner();
+            const rightPanner = audioContext.createStereoPanner();
+            leftPanner.pan.value = -0.85;
+            rightPanner.pan.value = 0.85;
+            const delayFilter = audioContext.createBiquadFilter();
+            delayFilter.type = "lowpass";
+            delayFilter.frequency.value = 3200;
+            delayLeft.connect(leftPanner);
+            leftPanner.connect(masterGain);
+            delayLeft.connect(delayRight);
+            delayRight.connect(rightPanner);
+            rightPanner.connect(masterGain);
+            delayRight.connect(delayFilter);
+            delayFilter.connect(feedback);
+            feedback.connect(delayLeft);
+
+            noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
+            const noiseData = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseData.length; i++) noiseData[i] = Math.random() * 2 - 1;
+            return true;
+          }
+
+          /** Convert a MIDI note number to a frequency in hertz. */
+          const midiToFrequency = (note) => 440 * Math.pow(2, (note - 69) / 12);
+
+          /**
+           * Connect a voice to the master output, optionally adding a stereo pan,
+           * a reverb send and a delay send.
+           */
+          function routeNode(node, { pan = 0, reverb: reverbAmount = 0, delay: delayAmount = 0 } = {}) {
+            let output = node;
+            if (pan) {
+              const panner = audioContext.createStereoPanner();
+              panner.pan.value = pan;
+              output.connect(panner);
+              output = panner;
+            }
+            output.connect(masterGain);
+            if (reverbAmount) {
+              const send = audioContext.createGain();
+              send.gain.value = reverbAmount;
+              output.connect(send);
+              send.connect(reverb);
+            }
+            if (delayAmount) {
+              const send = audioContext.createGain();
+              send.gain.value = delayAmount;
+              output.connect(send);
+              send.connect(delayLeft);
+            }
+          }
+
+          /**
+           * Build a gain envelope. With `sustain`, the note decays to
+           * `peak * sustain` and is released after `decay`. Without it, the
+           * note decays exponentially over `decay`.
+           */
+          function createEnvelope(startTime, attack, peak, decay, sustain = 0, release = 0) {
+            const gain = audioContext.createGain();
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(peak, startTime + attack);
+            if (sustain) {
+              gain.gain.setTargetAtTime(peak * sustain, startTime + attack, decay / 3);
+              gain.gain.setTargetAtTime(0, startTime + attack + decay, release / 4);
+            } else {
+              gain.gain.exponentialRampToValueAtTime(0.0001, startTime + attack + decay);
+            }
+            return gain;
+          }
+
+          /** A plain oscillator with a fixed duration, wired to `destination`. */
+          function createOscillator(type, frequency, startTime, duration, destination, detune = 0) {
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = type;
+            oscillator.frequency.value = frequency;
+            oscillator.detune.value = detune;
+            oscillator.connect(destination);
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration + 0.05);
+            return oscillator;
+          }
+
+          /* ---------- The instruments ---------- */
+
+          const instruments = {
+            /** 8-bit square-wave lead. */
+            squareLead: (startTime, note, gain, duration, effects) => {
+              const envelope = createEnvelope(startTime, 0.004, gain, duration);
+              createOscillator("square", midiToFrequency(note), startTime, duration, envelope);
+              routeNode(envelope, effects);
+            },
+            /** Triangle bass. */
+            triangleBass: (startTime, note, gain, duration, effects) => {
+              const envelope = createEnvelope(startTime, 0.006, gain, duration);
+              createOscillator("triangle", midiToFrequency(note), startTime, duration, envelope);
+              routeNode(envelope, effects);
+            },
+            /** Two-operator FM bell. */
+            fmBell: (startTime, note, gain, duration, effects) => {
+              const frequency = midiToFrequency(note);
+              const envelope = createEnvelope(startTime, 0.003, gain, duration);
+              const carrier = createOscillator("sine", frequency, startTime, duration, envelope);
+              const modulator = audioContext.createOscillator();
+              const modulatorGain = audioContext.createGain();
+              modulator.frequency.value = frequency * 3.5;
+              modulatorGain.gain.setValueAtTime(frequency * 2.4, startTime);
+              modulatorGain.gain.exponentialRampToValueAtTime(frequency * 0.05, startTime + duration);
+              modulator.connect(modulatorGain);
+              modulatorGain.connect(carrier.frequency);
+              modulator.start(startTime);
+              modulator.stop(startTime + duration + 0.05);
+              routeNode(envelope, effects);
+            },
+            /** Short plucked note with an octave shimmer. */
+            pluck: (startTime, note, gain, duration, effects) => {
+              const envelope = createEnvelope(startTime, 0.002, gain, duration);
+              createOscillator("triangle", midiToFrequency(note), startTime, duration, envelope);
+              const shimmer = createEnvelope(startTime, 0.002, gain * 0.4, duration * 0.4);
+              createOscillator("sine", midiToFrequency(note + 12), startTime, duration, shimmer);
+              shimmer.connect(envelope);
+              routeNode(envelope, effects);
+            },
+            /** Filtered saw bass with an envelope sweep. */
+            sawBass: (startTime, note, gain, duration, effects, cutoff = 700) => {
+              const lowpass = audioContext.createBiquadFilter();
+              lowpass.type = "lowpass";
+              lowpass.Q.value = 6;
+              lowpass.frequency.setValueAtTime(cutoff * 2.4, startTime);
+              lowpass.frequency.exponentialRampToValueAtTime(cutoff * 0.5, startTime + duration);
+              const envelope = createEnvelope(startTime, 0.005, gain, duration);
+              lowpass.connect(envelope);
+              createOscillator("sawtooth", midiToFrequency(note), startTime, duration, lowpass);
+              routeNode(envelope, effects);
+            },
+            /** Deep sine sub bass. */
+            subBass: (startTime, note, gain, duration, effects) => {
+              const envelope = createEnvelope(startTime, 0.02, gain, duration, 0.8, 0.3);
+              createOscillator("sine", midiToFrequency(note), startTime, duration + 0.3, envelope);
+              routeNode(envelope, effects);
+            },
+            /** Detuned saw pad with a filter sweep. */
+            pad: (
+              startTime,
+              notes,
+              gain,
+              duration,
+              effects,
+              startCutoff = 400,
+              endCutoff = 2600,
+              attack = 0.25,
+            ) => {
+              const lowpass = audioContext.createBiquadFilter();
+              lowpass.type = "lowpass";
+              lowpass.Q.value = 2;
+              lowpass.frequency.setValueAtTime(startCutoff, startTime);
+              lowpass.frequency.exponentialRampToValueAtTime(endCutoff, startTime + duration * 0.6);
+              lowpass.frequency.exponentialRampToValueAtTime(startCutoff * 1.4, startTime + duration + 0.6);
+              const envelope = createEnvelope(startTime, attack, gain, duration, 0.85, 0.9);
+              lowpass.connect(envelope);
+              notes.forEach((note) =>
+                [-9, 9].forEach((detune) =>
+                  createOscillator(
+                    "sawtooth",
+                    midiToFrequency(note),
+                    startTime,
+                    duration + 1,
+                    lowpass,
+                    detune,
+                  ),
+                ),
+              );
+              routeNode(envelope, effects);
+            },
+            /** Pitch-dropping kick drum. */
+            kick: (startTime, gain = 0.9) => {
+              const oscillator = audioContext.createOscillator();
+              const envelope = createEnvelope(startTime, 0.002, gain, 0.42);
+              oscillator.frequency.setValueAtTime(150, startTime);
+              oscillator.frequency.exponentialRampToValueAtTime(42, startTime + 0.13);
+              oscillator.connect(envelope);
+              oscillator.start(startTime);
+              oscillator.stop(startTime + 0.5);
+              routeNode(envelope);
+            },
+            /** Noise snare with a triangle body. */
+            snare: (startTime, gain = 0.35, effects = { reverb: 0.25 }) => {
+              const source = audioContext.createBufferSource();
+              source.buffer = noiseBuffer;
+              const highpass = audioContext.createBiquadFilter();
+              highpass.type = "highpass";
+              highpass.frequency.value = 1400;
+              const envelope = createEnvelope(startTime, 0.001, gain, 0.2);
+              source.connect(highpass);
+              highpass.connect(envelope);
+              source.start(startTime);
+              source.stop(startTime + 0.3);
+              routeNode(envelope, effects);
+              const bodyEnvelope = createEnvelope(startTime, 0.001, gain * 0.6, 0.1);
+              createOscillator("triangle", 190, startTime, 0.12, bodyEnvelope);
+              routeNode(bodyEnvelope);
+            },
+            /** Short noise hi-hat, optionally panned. */
+            hat: (startTime, gain = 0.1, pan = 0) => {
+              const source = audioContext.createBufferSource();
+              source.buffer = noiseBuffer;
+              const highpass = audioContext.createBiquadFilter();
+              highpass.type = "highpass";
+              highpass.frequency.value = 7500;
+              const envelope = createEnvelope(startTime, 0.001, gain, 0.045);
+              source.connect(highpass);
+              highpass.connect(envelope);
+              source.start(startTime, Math.random() * 0.5);
+              source.stop(startTime + 0.08);
+              routeNode(envelope, { pan });
+            },
+          };
+
+          /* ---------- One bar per milestone ---------- */
+
+          // I–V–vi–IV in C, one chord per milestone.
+          const CHORDS = [
+            [60, 64, 67, 72],
+            [59, 62, 67, 71],
+            [60, 64, 69, 72],
+            [60, 65, 69, 72],
+          ];
+          const BASS_ROOTS = [36, 43, 45, 41];
+          // Which chord tone carries the lead, per category.
+          const LEAD_TONE = { found: 0, markup: 1, css: 2, a11y: 3, i18n: 1, media: 2, sec: 3, now: 0 };
+
+          /** 1989–1999: square arpeggios, triangle bass, noise hats. */
+          function playChiptuneBar({ startTime, chord, root, lead, index }) {
+            [0, 1, 2, 3, 2, 1, 2, 3].forEach((tone, step) =>
+              instruments.squareLead(startTime + step * SIXTEENTH, chord[tone] + 12, 0.045, 0.11),
+            );
+            [0, 2, 4, 6].forEach((step, note) =>
+              instruments.triangleBass(startTime + step * SIXTEENTH, root + (note % 2 ? 12 : 0), 0.22, 0.2),
+            );
+            if (index > 1)
+              [1, 3, 5, 7].forEach((step) => instruments.hat(startTime + step * SIXTEENTH, 0.05));
+            instruments.squareLead(startTime, lead + 12, 0.06, 0.42, { delay: 0.12 });
+          }
+
+          /** 2000–2013: FM bells, kick drum, filtered saw bass. */
+          function playFmBar({ startTime, chord, root, lead, milestone }) {
+            instruments.kick(startTime, 0.8);
+            instruments.kick(startTime + 4 * SIXTEENTH, 0.7);
+            [2, 6].forEach((step) => instruments.hat(startTime + step * SIXTEENTH, 0.08));
+            [0, 2, 4, 6].forEach((step) =>
+              instruments.sawBass(startTime + step * SIXTEENTH, root, 0.18, 0.22, {}, 500),
+            );
+            [0, 2, 1, 3].forEach((tone, step) =>
+              instruments.pluck(startTime + (step * 2 + 1) * SIXTEENTH, chord[tone] + 12, 0.05, 0.3, {
+                pan: step % 2 ? 0.4 : -0.4,
+                reverb: 0.15,
+              }),
+            );
+            instruments.fmBell(startTime, lead + 12, 0.2, 1.1, { reverb: 0.25, delay: 0.18 });
+            instruments.fmBell(
+              startTime + 5 * SIXTEENTH,
+              chord[(LEAD_TONE[milestone.category] + 2) % 4] + 12,
+              0.09,
+              0.6,
+              { reverb: 0.25 },
+            );
+          }
+
+          /** 2014–2020: detuned saw pads, filter sweeps, full drum kit. */
+          function playSynthpopBar({ startTime, chord, root, lead }) {
+            instruments.pad(startTime, chord.slice(0, 3), 0.055, BAR_DURATION, { reverb: 0.3 }, 380, 2800);
+            instruments.kick(startTime, 0.85);
+            instruments.kick(startTime + 4 * SIXTEENTH, 0.8);
+            instruments.snare(startTime + 4 * SIXTEENTH, 0.3);
+            for (let step = 0; step < 8; step++) {
+              instruments.hat(startTime + step * SIXTEENTH, step % 2 ? 0.045 : 0.09, step % 2 ? 0.3 : -0.3);
+            }
+            instruments.subBass(startTime, root - 12, 0.35, BAR_DURATION * 0.9);
+            [0, 1, 2, 3, 1, 2, 3, 2].forEach((tone, step) =>
+              instruments.pluck(startTime + step * SIXTEENTH, chord[tone] + 12, 0.035, 0.18, { delay: 0.3 }),
+            );
+            instruments.fmBell(startTime, lead + 12, 0.12, 0.8, { reverb: 0.3, delay: 0.25 });
+          }
+
+          /** 2021–now: lush pads, ping-pong delay, convolution reverb. */
+          function playAmbientBar({ startTime, chord, root, lead }) {
+            instruments.pad(
+              startTime,
+              [chord[0] - 12, ...chord.slice(0, 3)],
+              0.04,
+              BAR_DURATION * 1.2,
+              { reverb: 0.6 },
+              600,
+              1900,
+              0.4,
+            );
+            instruments.subBass(startTime, root - 12, 0.3, BAR_DURATION);
+            instruments.kick(startTime, 0.5);
+            [2, 6].forEach((step) =>
+              instruments.hat(startTime + step * SIXTEENTH, 0.04, step === 2 ? -0.5 : 0.5),
+            );
+            [0, 2, 3, 1].forEach((tone, step) =>
+              instruments.pluck(startTime + step * 2 * SIXTEENTH, chord[tone] + 24, 0.05, 0.5, {
+                delay: 0.5,
+                reverb: 0.4,
+                pan: step % 2 ? 0.6 : -0.6,
+              }),
+            );
+            instruments.fmBell(startTime, lead + 12, 0.11, 1.6, { reverb: 0.6, delay: 0.35 });
+          }
+
+          /** NOW: every layer at once, one last chord. */
+          function playFinaleBar({ startTime }) {
+            const finaleChord = [48, 55, 60, 64, 67, 72];
+            instruments.pad(startTime, finaleChord.slice(1), 0.05, 4.5, { reverb: 0.7 }, 300, 3200, 0.6);
+            instruments.subBass(startTime, 36, 0.4, 4.5);
+            instruments.kick(startTime, 0.9);
+            instruments.snare(startTime, 0.25, { reverb: 0.6 });
+            [60, 64, 67, 72, 76, 79, 84, 88].forEach((note, step) =>
+              instruments.fmBell(startTime + step * SIXTEENTH, note, 0.08, 2.2, {
+                reverb: 0.6,
+                delay: 0.3,
+                pan: step % 2 ? 0.5 : -0.5,
+              }),
+            );
+          }
+
+          /** Schedule one bar of music for milestone `index`. */
+          function playBar(index, startTime) {
+            const milestone = MILESTONES[index];
+            const chord = CHORDS[index % 4];
+            const root = BASS_ROOTS[index % 4];
+            const lead = chord[LEAD_TONE[milestone.category]] + 12;
+            const bar = { startTime, chord, root, lead, milestone, index };
+            const era = eraForMilestone(milestone);
+            if (era === 0) playChiptuneBar(bar);
+            else if (era === 1) playFmBar(bar);
+            else if (era === 2) playSynthpopBar(bar);
+            else if (era === 3) playAmbientBar(bar);
+            else playFinaleBar(bar);
+          }
+
+          /* ---------- Card interaction ---------- */
+
+          function centerCard(index) {
+            const card = cards[index];
+            track.scrollTo({
+              left: card.offsetLeft - track.offsetLeft - (track.clientWidth - card.offsetWidth) / 2,
+              behavior: prefersReducedMotion ? "auto" : "smooth",
+            });
+          }
+
+          function highlightMilestone(index) {
+            currentIndex = index;
+            currentEra = eraForMilestone(MILESTONES[index]);
+            cards.forEach((card, cardIndex) => card.classList.toggle("lit", cardIndex === index));
+            centerCard(index);
+            const milestone = MILESTONES[index];
+            $("#tlnow").textContent = `${milestone.year} · ${milestone.title}`;
+            if (cards[index].animate && !prefersReducedMotion) {
+              cards[index].animate([{ filter: "brightness(1.8)" }, { filter: "brightness(1)" }], {
+                duration: 700,
+                easing: "ease-out",
+              });
+            }
+          }
+
+          function playMilestone(index) {
+            if (!ensureAudio()) return highlightMilestone(index);
+            if (audioContext.state === "suspended") audioContext.resume();
+            masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+            masterGain.gain.setValueAtTime(0.55, audioContext.currentTime);
+            playBar(index, audioContext.currentTime + 0.03);
+            highlightMilestone(index);
+          }
+
+          const playButton = $("#play");
+
+          function stopPlayback() {
+            playing = false;
+            clearInterval(scheduler);
+            playButton.textContent = "▶ Play the history of the Web";
+            playButton.classList.remove("on");
+            if (audioContext) {
+              const now = audioContext.currentTime;
+              masterGain.gain.cancelScheduledValues(now);
+              masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+              masterGain.gain.linearRampToValueAtTime(0, now + 0.4);
+              masterGain.gain.setValueAtTime(0.55, now + 2.5);
+            }
+          }
+
+          playButton.addEventListener("click", () => {
+            if (playing) {
+              stopPlayback();
+              return;
+            }
+            if (!ensureAudio()) return;
+            if (audioContext.state === "suspended") audioContext.resume();
+            const now = audioContext.currentTime;
+            masterGain.gain.cancelScheduledValues(now);
+            masterGain.gain.setValueAtTime(0.55, now);
+            playing = true;
+            playButton.textContent = "■ Stop";
+            playButton.classList.add("on");
+            nextMilestoneIndex =
+              currentIndex >= MILESTONES.length - 1 || currentIndex < 0 ? 0 : currentIndex + 1;
+            nextScheduleTime = audioContext.currentTime + 0.08;
+
+            scheduler = setInterval(() => {
+              while (playing && nextScheduleTime < audioContext.currentTime + 0.2) {
+                const index = nextMilestoneIndex;
+                const startTime = nextScheduleTime;
+                playBar(index, startTime);
+                setTimeout(
+                  () => {
+                    if (playing || index === MILESTONES.length - 1) highlightMilestone(index);
+                  },
+                  Math.max(0, (startTime - audioContext.currentTime) * 1000),
+                );
+                nextMilestoneIndex++;
+                nextScheduleTime += BAR_DURATION;
+                if (nextMilestoneIndex >= MILESTONES.length) {
+                  playing = false;
+                  clearInterval(scheduler);
+                  setTimeout(
+                    () => {
+                      playButton.textContent = "▶ Play the history of the Web";
+                      playButton.classList.remove("on");
+                    },
+                    (startTime - audioContext.currentTime) * 1000 + 4500,
+                  );
+                }
+              }
+            }, 25);
+          });
+
+          $("#prev").onclick = () => playMilestone(Math.max(0, currentIndex - 1));
+          $("#next").onclick = () => playMilestone(Math.min(MILESTONES.length - 1, currentIndex + 1));
+
+          /* Drag the track with the mouse (touch scrolling works natively). */
+          let dragState = null;
+          let dragDistance = 0;
+          track.addEventListener("pointerdown", (event) => {
+            if (event.pointerType !== "mouse") return;
+            dragState = { x: event.clientX, scrollLeft: track.scrollLeft };
+            dragDistance = 0;
+          });
+          addEventListener("pointermove", (event) => {
+            if (!dragState) return;
+            const deltaX = event.clientX - dragState.x;
+            dragDistance = Math.max(dragDistance, Math.abs(deltaX));
+            if (dragDistance > 4) {
+              track.classList.add("drag");
+              track.scrollLeft = dragState.scrollLeft - deltaX;
+            }
+          });
+          addEventListener("pointerup", () => {
+            dragState = null;
+            track.classList.remove("drag");
+          });
+          track.addEventListener("click", (event) => {
+            const card = event.target.closest(".ms");
+            if (!card || dragDistance > 4) return;
+            playMilestone(+card.dataset.i);
+          });
+
+          /* ---------- Visualizer: spectrum + waveform ---------- */
+
+          const scopeCanvas = $("#scope");
+          const scopeContext = scopeCanvas.getContext("2d");
+          let frequencyData = null;
+          let timeDomainData = null;
+          let scopeVisible = false;
+          new IntersectionObserver((entries) => (scopeVisible = entries[0].isIntersecting)).observe(
+            scopeCanvas,
+          );
+          const SPECTRUM_BARS = 120;
+
+          function drawScope(now) {
+            requestAnimationFrame(drawScope);
+            if (!scopeVisible || isStill()) return;
+
+            const ratio = Math.min(devicePixelRatio || 1, 2);
+            const width = scopeCanvas.clientWidth;
+            const height = scopeCanvas.clientHeight;
+            if (scopeCanvas.width !== width * ratio) {
+              scopeCanvas.width = width * ratio;
+              scopeCanvas.height = height * ratio;
+            }
+            scopeContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+            scopeContext.clearRect(0, 0, width, height);
+
+            const monoFont = getComputedStyle(document.body).getPropertyValue("--mono");
+            const eraStyle = ERAS[currentEra < 0 ? 3 : currentEra];
+
+            if (analyser) {
+              frequencyData = frequencyData || new Uint8Array(analyser.frequencyBinCount);
+              timeDomainData = timeDomainData || new Float32Array(analyser.fftSize);
+              analyser.getByteFrequencyData(frequencyData);
+              analyser.getFloatTimeDomainData(timeDomainData);
+            }
+
+            const mid = height * 0.64;
+            const barWidth = width / SPECTRUM_BARS;
+            for (let bar = 0; bar < SPECTRUM_BARS; bar++) {
+              let value = 0;
+              if (frequencyData) {
+                // Spread the lower 70% of the spectrum over the bars.
+                const low = Math.floor(Math.pow(frequencyData.length * 0.7, bar / SPECTRUM_BARS));
+                const high = Math.max(
+                  low + 1,
+                  Math.floor(Math.pow(frequencyData.length * 0.7, (bar + 1) / SPECTRUM_BARS)),
+                );
+                for (let bin = low; bin < high; bin++) value = Math.max(value, frequencyData[bin]);
+                value /= 255;
+              } else {
+                value = 0.03 + 0.02 * Math.sin(now * 0.002 + bar * 0.3);
+              }
+
+              const barHeight = value * height * 0.4;
+              const x = bar * barWidth;
+              const gradient = scopeContext.createLinearGradient(
+                0,
+                mid - barHeight,
+                0,
+                mid + barHeight * 0.5,
+              );
+              gradient.addColorStop(0, eraStyle.color);
+              gradient.addColorStop(1, "#005a9c");
+              scopeContext.fillStyle = gradient;
+              scopeContext.globalAlpha = 0.85;
+              scopeContext.fillRect(x + 1, mid - barHeight, barWidth - 2, barHeight);
+              scopeContext.globalAlpha = 0.18;
+              scopeContext.fillRect(x + 1, mid, barWidth - 2, barHeight * 0.5);
+            }
+
+            // Oscilloscope trace over the bars.
+            scopeContext.globalAlpha = 1;
+            scopeContext.strokeStyle = "rgba(232,237,247,.8)";
+            scopeContext.lineWidth = 1.4;
+            scopeContext.beginPath();
+            for (let x = 0; x <= width; x += 2) {
+              const sample = timeDomainData
+                ? timeDomainData[Math.floor((x / width) * (timeDomainData.length - 1))] * 2.4
+                : 0;
+              const y = mid + sample * height * 0.3;
+              if (x) scopeContext.lineTo(x, y);
+              else scopeContext.moveTo(x, y);
+            }
+            scopeContext.stroke();
+
+            // Era label.
+            scopeContext.textAlign = "left";
+            scopeContext.font = "600 12px " + monoFont;
+            scopeContext.fillStyle = eraStyle.color;
+            scopeContext.fillText(currentIndex < 0 ? "PRESS PLAY" : eraStyle.name.toUpperCase(), 0, 13);
+            scopeContext.font = "10px " + monoFont;
+            scopeContext.fillStyle = "#8a96ad";
+            scopeContext.fillText(
+              currentIndex < 0 ? "every era has its own sound" : eraStyle.description,
+              0,
+              28,
+            );
+            if (width > 760) {
+              scopeContext.textAlign = "right";
+              scopeContext.fillStyle = "#3a455c";
+              scopeContext.fillText(
+                "Oscillator → BiquadFilter → StereoPanner → Convolver → DynamicsCompressor → Analyser",
+                width,
+                13,
+              );
+              scopeContext.textAlign = "left";
+            }
+          }
+
+          requestAnimationFrame(drawScope);
+        })();
+
+        /* ================= GALAXY ================= */
+
+        /*
+         * W3C specifications shown in the galaxy, grouped by field.
+         * `zh` is the older group label kept for search; `label` is what the
+         * canvas draws above each cluster.
+         */
+        const SPEC_GROUPS = [
+          {
+            id: "css",
+            zh: "Style",
+            label: "CSS & Style",
+            color: "#5fd4ff",
+            specs: [
+              { name: "CSS Grid Layout Module Level 2", path: "css-grid-2" },
+              { name: "CSS Flexible Box Layout Level 1", path: "css-flexbox-1" },
+              { name: "CSS Writing Modes Level 4", path: "css-writing-modes-4" },
+              { name: "CSS Ruby Annotation Layout Level 1", path: "css-ruby-1" },
+              { name: "CSS Text Module Level 3", path: "css-text-3" },
+              { name: "CSS Text Module Level 4", path: "css-text-4" },
+              { name: "CSS Text Decoration Level 3", path: "css-text-decor-3" },
+              { name: "CSS Fonts Module Level 4", path: "css-fonts-4" },
+              { name: "CSS Color Module Level 4", path: "css-color-4" },
+              { name: "CSS Color Module Level 5", path: "css-color-5" },
+              { name: "CSS Cascading and Inheritance Level 5", path: "css-cascade-5" },
+              { name: "CSS Nesting Module", path: "css-nesting-1" },
+              { name: "CSS Containment Module Level 2", path: "css-contain-2" },
+              { name: "CSS Conditional Rules Level 5", path: "css-conditional-5" },
+              { name: "Selectors Level 4", path: "selectors-4" },
+              { name: "Media Queries Level 5", path: "mediaqueries-5" },
+              { name: "CSS Transforms Module Level 2", path: "css-transforms-2" },
+              { name: "CSS Animations Level 1", path: "css-animations-1" },
+              { name: "CSS Transitions", path: "css-transitions-1" },
+              { name: "Scroll-driven Animations", path: "scroll-animations-1" },
+              { name: "CSS View Transitions Level 1", path: "css-view-transitions-1" },
+              { name: "CSS Scroll Snap Level 1", path: "css-scroll-snap-1" },
+              { name: "CSS Box Alignment Level 3", path: "css-align-3" },
+              { name: "CSS Values and Units Level 4", path: "css-values-4" },
+              { name: "CSS Custom Properties Level 1", path: "css-variables-1" },
+              { name: "CSS Properties and Values API", path: "css-properties-values-api-1" },
+              { name: "CSS Masking Level 1", path: "css-masking-1" },
+              { name: "Compositing and Blending Level 1", path: "compositing-1" },
+              { name: "Filter Effects Module Level 1", path: "filter-effects-1" },
+              { name: "CSS Overflow Level 3", path: "css-overflow-3" },
+              { name: "CSS Anchor Positioning", path: "css-anchor-position-1" },
+              { name: "CSS Logical Properties Level 1", path: "css-logical-1" },
+              { name: "CSS Backgrounds and Borders Level 3", path: "css-backgrounds-3" },
+              { name: "CSS Inline Layout Level 3", path: "css-inline-3" },
+              { name: "CSS Paged Media Level 3", path: "css-page-3" },
+              { name: "CSS 2.1", path: "CSS2" },
+              { name: "CSS Display Level 3", path: "css-display-3" },
+              { name: "CSS Box Sizing Level 3", path: "css-sizing-3" },
+              { name: "CSS Easing Functions Level 1", path: "css-easing-1" },
+              { name: "CSS Shapes Level 1", path: "css-shapes-1" },
+            ],
+          },
+          {
+            id: "api",
+            zh: "Platform APIs",
+            label: "Web APIs",
+            color: "#8f9bff",
+            specs: [
+              { name: "Web Audio API", path: "webaudio" },
+              { name: "WebRTC 1.0", path: "webrtc" },
+              { name: "WebGPU", path: "webgpu" },
+              { name: "WebGPU Shading Language", path: "WGSL" },
+              { name: "WebCodecs", path: "webcodecs" },
+              { name: "Media Capture and Streams", path: "mediacapture-streams" },
+              { name: "Media Source Extensions", path: "media-source-2" },
+              { name: "Encrypted Media Extensions", path: "encrypted-media" },
+              { name: "Pointer Events Level 3", path: "pointerevents3" },
+              { name: "Touch Events", path: "touch-events" },
+              { name: "UI Events", path: "uievents" },
+              { name: "Intersection Observer", path: "intersection-observer" },
+              { name: "Resize Observer", path: "resize-observer-1" },
+              { name: "Gamepad", path: "gamepad" },
+              { name: "Screen Orientation", path: "screen-orientation" },
+              { name: "Geolocation", path: "geolocation" },
+              { name: "Clipboard API and events", path: "clipboard-apis" },
+              { name: "Web Share API", path: "web-share" },
+              { name: "Payment Request API", path: "payment-request" },
+              { name: "Service Workers", path: "service-workers" },
+              { name: "Push API", path: "push-api" },
+              { name: "Indexed Database API", path: "IndexedDB" },
+              { name: "File API", path: "FileAPI" },
+              { name: "Web Animations", path: "web-animations-1" },
+              { name: "WebXR Device API", path: "webxr" },
+              { name: "Web MIDI API", path: "webmidi" },
+              { name: "WebTransport", path: "webtransport" },
+              { name: "Picture-in-Picture", path: "picture-in-picture" },
+              { name: "Screen Capture", path: "screen-capture" },
+              { name: "Web Locks API", path: "web-locks" },
+              { name: "Generic Sensor API", path: "generic-sensor" },
+              { name: "Screen Wake Lock API", path: "screen-wake-lock" },
+              { name: "Device Orientation and Motion", path: "orientation-event" },
+              { name: "Vibration API", path: "vibration" },
+              { name: "Badging API", path: "badging" },
+              { name: "Web Application Manifest", path: "appmanifest" },
+            ],
+          },
+          {
+            id: "perf",
+            zh: "Performance",
+            label: "Performance",
+            color: "#b48cff",
+            specs: [
+              { name: "Navigation Timing Level 2", path: "navigation-timing-2" },
+              { name: "Resource Timing", path: "resource-timing" },
+              { name: "User Timing", path: "user-timing" },
+              { name: "Performance Timeline", path: "performance-timeline" },
+              { name: "High Resolution Time", path: "hr-time-3" },
+              { name: "Largest Contentful Paint", path: "largest-contentful-paint" },
+              { name: "Event Timing API", path: "event-timing" },
+              { name: "Paint Timing", path: "paint-timing" },
+              { name: "Long Tasks API", path: "longtasks-1" },
+              { name: "Server Timing", path: "server-timing" },
+              { name: "Beacon", path: "beacon" },
+              { name: "Reporting API", path: "reporting-1" },
+              { name: "Device Memory", path: "device-memory" },
+              { name: "requestIdleCallback", path: "requestidlecallback" },
+            ],
+          },
+          {
+            id: "a11y",
+            zh: "Accessibility",
+            label: "Accessibility",
+            color: "#5ee39a",
+            specs: [
+              { name: "WCAG 2.2", path: "WCAG22" },
+              { name: "WCAG 2.1", path: "WCAG21" },
+              { name: "WCAG 2.0", path: "WCAG20" },
+              { name: "WCAG 3.0", path: "wcag-3.0" },
+              { name: "WAI-ARIA 1.2", path: "wai-aria-1.2" },
+              { name: "Core Accessibility API Mappings", path: "core-aam-1.2" },
+              { name: "HTML Accessibility API Mappings", path: "html-aam-1.0" },
+              { name: "Accessible Name and Description", path: "accname-1.2" },
+              { name: "ATAG 2.0", path: "ATAG20" },
+              { name: "UAAG 2.0", path: "UAAG20" },
+              { name: "Digital Publishing WAI-ARIA", path: "dpub-aria-1.1" },
+              { name: "WAI-ARIA Graphics Module", path: "graphics-aria-1.0" },
+              { name: "Media Accessibility User Requirements", path: "media-accessibility-reqs" },
+              { name: "ARIA in HTML", path: "html-aria" },
+              { name: "ACT Rules Format", path: "act-rules-format" },
+            ],
+          },
+          {
+            id: "i18n",
+            zh: "Internationalization",
+            label: "Internationalization",
+            color: "#ff7a8a",
+            specs: [
+              { name: "Requirements for Chinese Text Layout", path: "clreq" },
+              { name: "Requirements for Japanese Text Layout", path: "jlreq" },
+              { name: "Requirements for Hangul Text Layout and Typography", path: "klreq" },
+              { name: "Arabic & Persian Layout Requirements", path: "alreq" },
+              { name: "Indic Layout Requirements", path: "ilreq" },
+              { name: "Mongolian Layout Requirements", path: "mlreq" },
+              { name: "Tibetan Layout Requirements", path: "tlreq" },
+              { name: "Ethiopic Layout Requirements", path: "elreq" },
+              { name: "Character Model: Fundamentals", path: "charmod" },
+              { name: "Character Model: String Matching", path: "charmod-norm" },
+              { name: "Strings on the Web: Language and Direction Metadata", path: "string-meta" },
+              {
+                name: "Internationalization Best Practices for Spec Developers",
+                path: "international-specs",
+              },
+            ],
+          },
+          {
+            id: "doc",
+            zh: "Markup & Graphics",
+            label: "Markup & Graphics",
+            color: "#ffd27a",
+            specs: [
+              { name: "HTML5", path: "html5" },
+              { name: "HTML 4.01", path: "html401" },
+              { name: "XHTML 1.0", path: "xhtml1" },
+              { name: "SVG 2", path: "SVG2" },
+              { name: "SVG 1.1", path: "SVG11" },
+              { name: "MathML Core", path: "mathml-core" },
+              { name: "MathML 3.0", path: "MathML3" },
+              { name: "PNG (Third Edition)", path: "png-3" },
+              { name: "WOFF File Format 2.0", path: "WOFF2" },
+              { name: "EPUB 3.3", path: "epub-33" },
+              { name: "Timed Text Markup Language 2", path: "ttml2" },
+              { name: "WebVTT", path: "webvtt1" },
+              { name: "SMIL 3.0", path: "SMIL3" },
+              { name: "XML 1.0", path: "xml" },
+              { name: "Namespaces in XML", path: "xml-names" },
+              { name: "XSLT 3.0", path: "xslt-30" },
+              { name: "XPath 3.1", path: "xpath-31" },
+              { name: "XML Schema 1.1", path: "xmlschema11-1" },
+              { name: "Web Annotation Data Model", path: "annotation-model" },
+            ],
+          },
+          {
+            id: "sec",
+            zh: "Security, Identity & Privacy",
+            label: "Security & Identity",
+            color: "#ffa95c",
+            specs: [
+              { name: "Web Authentication Level 2", path: "webauthn-2" },
+              { name: "Content Security Policy Level 3", path: "CSP3" },
+              { name: "Subresource Integrity", path: "SRI" },
+              { name: "Permissions Policy", path: "permissions-policy" },
+              { name: "Secure Contexts", path: "secure-contexts" },
+              { name: "Referrer Policy", path: "referrer-policy" },
+              { name: "Mixed Content", path: "mixed-content" },
+              { name: "Upgrade Insecure Requests", path: "upgrade-insecure-requests" },
+              { name: "Verifiable Credentials 2.0", path: "vc-data-model-2.0" },
+              { name: "Decentralized Identifiers 1.0", path: "did-core" },
+              { name: "Federated Credential Management", path: "fedcm" },
+              { name: "Credential Management Level 1", path: "credential-management-1" },
+              { name: "Permissions", path: "permissions" },
+              { name: "Clear Site Data", path: "clear-site-data" },
+              { name: "Fetch Metadata", path: "fetch-metadata" },
+              { name: "Privacy Principles", path: "privacy-principles" },
+              { name: "Ethical Web Principles", path: "ethical-web-principles" },
+            ],
+          },
+          {
+            id: "data",
+            zh: "Data & Social Web",
+            label: "Data & Social Web",
+            color: "#4fa8ff",
+            specs: [
+              { name: "RDF 1.1 Concepts", path: "rdf11-concepts" },
+              { name: "RDF 1.2 Concepts", path: "rdf12-concepts" },
+              { name: "OWL 2", path: "owl2-overview" },
+              { name: "SPARQL 1.1 Query", path: "sparql11-query" },
+              { name: "SKOS", path: "skos-reference" },
+              { name: "JSON-LD 1.1", path: "json-ld11" },
+              { name: "RDF 1.1 Turtle", path: "turtle" },
+              { name: "SHACL", path: "shacl" },
+              { name: "PROV-O", path: "prov-o" },
+              { name: "DCAT 3", path: "vocab-dcat-3" },
+              { name: "RDFa Core 1.1", path: "rdfa-core" },
+              { name: "ActivityPub", path: "activitypub" },
+              { name: "Activity Streams 2.0", path: "activitystreams-core" },
+              { name: "Micropub", path: "micropub" },
+              { name: "WebSub", path: "websub" },
+              { name: "Webmention", path: "webmention" },
+              { name: "Linked Data Platform 1.0", path: "ldp" },
+              { name: "Data on the Web Best Practices", path: "dwbp" },
+              { name: "Time Ontology in OWL", path: "owl-time" },
+              { name: "WoT Architecture", path: "wot-architecture" },
+              { name: "WoT Thing Description", path: "wot-thing-description" },
+            ],
+          },
+        ];
+
+        /*
+         * A 3D star map. Every star is a W3C specification; the eight clusters
+         * are fields such as CSS, Web APIs or Accessibility. The camera rotates
+         * slowly on its own, and can be dragged, zoomed and searched.
+         */
+        (function galaxy() {
+          const canvas = $("#sky");
+          const context = canvas.getContext("2d");
+
+          const stars = [];
+          const groups = [];
+          let seed = 7;
+
+          /* Deterministic pseudo-random numbers, so the map looks the same on every load. */
+          const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+          const gaussian = () => {
+            let first = 0;
+            let second = 0;
+            while (!first) first = random();
+            while (!second) second = random();
+            return Math.sqrt(-2 * Math.log(first)) * Math.cos(2 * Math.PI * second);
+          };
+
+          // Spread the groups evenly over a sphere (Fibonacci sphere).
+          SPEC_GROUPS.forEach((groupData, groupIndex) => {
+            const groupCount = SPEC_GROUPS.length;
+            const phi = Math.acos(1 - (2 * (groupIndex + 0.5)) / groupCount);
+            const theta = Math.PI * (1 + Math.sqrt(5)) * groupIndex;
+            const centreX = Math.sin(phi) * Math.cos(theta);
+            const centreY = Math.cos(phi);
+            const centreZ = Math.sin(phi) * Math.sin(theta);
+
+            const group = {
+              id: groupData.id,
+              zh: groupData.zh,
+              label: groupData.label,
+              color: groupData.color,
+              x: centreX,
+              y: centreY,
+              z: centreZ,
+              stars: [],
+            };
+            groups.push(group);
+
+            // Each spec orbits its group centre with a little Gaussian scatter.
+            groupData.specs.forEach(({ name, path }) => {
+              const spread = 0.12 + 0.16 * Math.sqrt(groupData.specs.length / 40);
+              const star = {
+                name,
+                path,
+                group,
+                x: centreX + gaussian() * spread,
+                y: centreY + gaussian() * spread,
+                z: centreZ + gaussian() * spread,
+                magnitude: 0.6 + random() * 0.9,
+                twinkle: random() * 6.28,
+              };
+              stars.push(star);
+              group.stars.push(star);
+            });
+          });
+
+          // Link each star to its nearest neighbour inside the group, for the
+          // constellation lines. The `other.neighbour !== star` guard avoids
+          // two-star borrowings turning into a loop.
+          groups.forEach((group) => {
+            group.stars.forEach((star) => {
+              let nearest = null;
+              let nearestDistance = Infinity;
+              group.stars.forEach((other) => {
+                if (other === star) return;
+                const distance = (other.x - star.x) ** 2 + (other.y - star.y) ** 2 + (other.z - star.z) ** 2;
+                if (distance < nearestDistance && other.neighbour !== star) {
+                  nearestDistance = distance;
+                  nearest = other;
+                }
+              });
+              star.neighbour = nearest;
+            });
+          });
+
+          // Background dust: a hollow shell around the clusters.
+          const dust = [...Array(700)].map(() => {
+            const elevation = random() * 2 - 1;
+            const angle = random() * 6.283;
+            const radius = 1.6 + random() * 1.6;
+            return {
+              x: Math.sqrt(1 - elevation * elevation) * Math.cos(angle) * radius,
+              y: elevation * radius,
+              z: Math.sqrt(1 - elevation * elevation) * Math.sin(angle) * radius,
+              brightness: random(),
+            };
+          });
+
+          $("#statGalaxy").dataset.to = stars.length;
+
+          const legend = $("#legend");
+          legend.innerHTML = groups
+            .map(
+              (group) =>
+                `<button type="button" data-g="${group.id}" style="--c:${group.color}">${group.label}</button>`,
+            )
+            .join("");
+
+          /* ---------- Camera state ---------- */
+
+          let yaw = 0.4;
+          let pitch = -0.25;
+          let yawVelocity = 0.0009;
+          let pitchVelocity = 0;
+          let targetYaw = null;
+          let targetPitch = null;
+          let focusedGroup = null;
+          let query = "";
+          let hoveredStar = null;
+          let selectedStar = null;
+          let zoom = 1;
+          let targetZoom = 1;
+          let dragState = null;
+
+          let width;
+          let height;
+          let pixelRatio;
+          let visible = false;
+
+          function resize() {
+            pixelRatio = Math.min(devicePixelRatio || 1, 2);
+            width = canvas.clientWidth;
+            height = canvas.clientHeight;
+            canvas.width = width * pixelRatio;
+            canvas.height = height * pixelRatio;
+          }
+          new ResizeObserver(resize).observe(canvas);
+          resize();
+          new IntersectionObserver((entries) => (visible = entries[0].isIntersecting)).observe(canvas);
+
+          /** Rotate a 3D point and project it onto the 2D canvas. */
+          function project(point) {
+            const cosYaw = Math.cos(yaw);
+            const sinYaw = Math.sin(yaw);
+            const cosPitch = Math.cos(pitch);
+            const sinPitch = Math.sin(pitch);
+
+            const rotatedX = point.x * cosYaw - point.z * sinYaw;
+            let depth = point.x * sinYaw + point.z * cosYaw;
+            const rotatedY = point.y * cosPitch - depth * sinPitch;
+            depth = point.y * sinPitch + depth * cosPitch;
+
+            const perspective = 3 / (3 + depth);
+            const scale = Math.min(width, height) * 0.29 * zoom;
+            return {
+              x: width / 2 + rotatedX * scale * perspective,
+              y: height * 0.55 + rotatedY * scale * perspective,
+              depth,
+              perspective,
+            };
+          }
+
+          const matchesQuery = (star) =>
+            !query ||
+            (star.name + " " + (star.path || "") + " " + star.group.zh + " " + star.group.label)
+              .toLowerCase()
+              .includes(query);
+
+          const isHighlighted = (star) =>
+            (!focusedGroup || star.group === focusedGroup) && matchesQuery(star);
+
+          /* ---------- Rendering ---------- */
+
+          function draw(now) {
+            requestAnimationFrame(draw);
+            if (!visible || isStill()) return;
+
+            // Free rotation, plus easing towards a focused group.
+            if (!dragState && targetYaw === null) {
+              yaw += yawVelocity;
+              pitch += pitchVelocity;
+              pitchVelocity *= 0.95;
+              if (Math.abs(yawVelocity) > 0.0009) yawVelocity *= 0.96;
+            }
+            if (targetYaw !== null) {
+              yaw += (targetYaw - yaw) * 0.06;
+              pitch += (targetPitch - pitch) * 0.06;
+              if (Math.abs(targetYaw - yaw) < 0.002) {
+                targetYaw = null;
+              }
+            }
+            zoom += (targetZoom - zoom) * 0.06;
+            pitch = Math.max(-1.3, Math.min(1.3, pitch));
+
+            context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+            context.clearRect(0, 0, width, height);
+            const time = now * 0.001;
+
+            dust.forEach((mote) => {
+              const projected = project(mote);
+              const alpha =
+                0.08 + 0.25 * mote.brightness * (0.6 + 0.4 * Math.sin(time * 2 + mote.brightness * 20));
+              context.fillStyle = `rgba(180,200,255,${alpha})`;
+              context.fillRect(projected.x, projected.y, 1.2, 1.2);
+            });
+
+            // Soft glow behind each group.
+            groups.forEach((group) => {
+              const projected = project(group);
+              group.projected = projected;
+              const radius = Math.min(width, height) * 0.2 * projected.perspective * zoom;
+              const gradient = context.createRadialGradient(
+                projected.x,
+                projected.y,
+                0,
+                projected.x,
+                projected.y,
+                radius,
+              );
+              const alpha = focusedGroup && focusedGroup !== group ? 0.03 : 0.13;
+              gradient.addColorStop(
+                0,
+                group.color +
+                  Math.round(alpha * 255)
+                    .toString(16)
+                    .padStart(2, "0"),
+              );
+              gradient.addColorStop(1, group.color + "00");
+              context.fillStyle = gradient;
+              context.beginPath();
+              context.arc(projected.x, projected.y, radius, 0, 7);
+              context.fill();
+            });
+
+            const matchCount = query ? stars.filter(matchesQuery).length : 0;
+            const sortedStars = stars
+              .map((star) => ((star.projected = project(star)), star))
+              .sort((a, b) => b.projected.depth - a.projected.depth);
+
+            // Constellation lines first, so the stars sit on top.
+            context.lineWidth = 0.6;
+            stars.forEach((star) => {
+              if (!star.neighbour) return;
+              const highlighted = isHighlighted(star) && isHighlighted(star.neighbour);
+              context.strokeStyle = star.group.color + (highlighted ? "40" : "10");
+              context.beginPath();
+              context.moveTo(star.projected.x, star.projected.y);
+              context.lineTo(star.neighbour.projected.x, star.neighbour.projected.y);
+              context.stroke();
+            });
+
+            sortedStars.forEach((star) => {
+              const projected = star.projected;
+              const highlighted = isHighlighted(star);
+              const depth = (1.6 - projected.depth) / 2.6;
+              const radius =
+                (1.4 + star.magnitude * 2.2) *
+                projected.perspective *
+                Math.sqrt(zoom) *
+                (star === hoveredStar || star === selectedStar ? 1.9 : 1);
+              const alpha = highlighted
+                ? Math.min(1, 0.35 + depth * 0.7) * (0.8 + 0.2 * Math.sin(time * 1.5 + star.twinkle))
+                : 0.08;
+
+              // Three layers: outer glow, white core, coloured body.
+              context.globalAlpha = alpha * 0.35;
+              context.fillStyle = star.group.color;
+              context.beginPath();
+              context.arc(projected.x, projected.y, radius * 2.6, 0, 7);
+              context.fill();
+              context.globalAlpha = alpha;
+              context.fillStyle = "#fff";
+              context.beginPath();
+              context.arc(projected.x, projected.y, radius * 0.55, 0, 7);
+              context.fill();
+              context.globalAlpha = alpha * 0.9;
+              context.fillStyle = star.group.color;
+              context.beginPath();
+              context.arc(projected.x, projected.y, radius, 0, 7);
+              context.fill();
+              context.globalAlpha = 1;
+
+              // Label a star when a group is focused, or when a search matches a few.
+              if (highlighted && (focusedGroup || (query && matchCount <= 18)) && projected.depth < 0.6) {
+                context.fillStyle = "rgba(232,237,247,.75)";
+                context.font = "11px " + getComputedStyle(document.body).getPropertyValue("--sans");
+                context.fillText(star.name, projected.x + radius + 4, projected.y + 3);
+              }
+            });
+
+            // Group names above their clusters.
+            groups.forEach((group) => {
+              const projected = group.projected;
+              if (focusedGroup && focusedGroup !== group) return;
+              const labelY = projected.y - Math.min(width, height) * 0.13 * projected.perspective * zoom;
+              context.globalAlpha = Math.max(0.15, Math.min(1, 1.3 - projected.depth));
+              context.fillStyle = group.color;
+              context.font = "600 13px " + getComputedStyle(document.body).getPropertyValue("--sans");
+              context.textAlign = "center";
+              context.fillText(group.label, projected.x, labelY);
+              context.font = "10px " + getComputedStyle(document.body).getPropertyValue("--mono");
+              context.fillStyle = "rgba(138,150,173,.8)";
+              context.fillText(group.stars.length + " SPECS", projected.x, labelY + 15);
+              context.textAlign = "start";
+              context.globalAlpha = 1;
+            });
+
+            // A pulsing ring marks the selected star.
+            if (selectedStar) {
+              const projected = selectedStar.projected;
+              context.strokeStyle = selectedStar.group.color;
+              context.lineWidth = 1;
+              context.beginPath();
+              context.arc(projected.x, projected.y, 14 + Math.sin(time * 4) * 2, 0, 7);
+              context.stroke();
+            }
+          }
+          requestAnimationFrame(draw);
+
+          /** Find the closest visible, highlighted star within 18px of (x, y). */
+          function starAt(x, y) {
+            let nearest = null;
+            let nearestDistance = 18 * 18;
+            stars.forEach((star) => {
+              if (!star.projected || !isHighlighted(star)) return;
+              const distance = (star.projected.x - x) ** 2 + (star.projected.y - y) ** 2;
+              if (distance < nearestDistance && star.projected.depth < 1.2) {
+                nearestDistance = distance;
+                nearest = star;
+              }
+            });
+            return nearest;
+          }
+
+          const tooltip = $("#tip");
+          const infoCard = $("#card");
+
+          canvas.addEventListener("pointerdown", (event) => {
+            canvas.setPointerCapture(event.pointerId);
+            dragState = { x: event.clientX, y: event.clientY, movement: 0 };
+            canvas.classList.add("drag");
+            targetYaw = null;
+          });
+
+          canvas.addEventListener("pointermove", (event) => {
+            const bounds = canvas.getBoundingClientRect();
+            const pointerX = event.clientX - bounds.left;
+            const pointerY = event.clientY - bounds.top;
+
+            if (dragState) {
+              const deltaX = event.clientX - dragState.x;
+              const deltaY = event.clientY - dragState.y;
+              dragState.movement += Math.abs(deltaX) + Math.abs(deltaY);
+              yaw -= deltaX * 0.005;
+              pitch += deltaY * 0.005;
+              yawVelocity = -deltaX * 0.005 * 0.6;
+              pitchVelocity = deltaY * 0.005 * 0.4;
+              dragState.x = event.clientX;
+              dragState.y = event.clientY;
+              return;
+            }
+
+            hoveredStar = starAt(pointerX, pointerY);
+            if (hoveredStar) {
+              tooltip.style.opacity = 1;
+              tooltip.textContent = hoveredStar.name;
+              tooltip.style.left = Math.min(pointerX + 14, width - tooltip.offsetWidth - 6) + "px";
+              tooltip.style.top = pointerY - 30 + "px";
+              canvas.style.cursor = "pointer";
+            } else {
+              tooltip.style.opacity = 0;
+              canvas.style.cursor = "";
+            }
+          });
+
+          canvas.addEventListener("pointerup", (event) => {
+            canvas.classList.remove("drag");
+            const movement = dragState ? dragState.movement : 99; // 99 = treat as a drag
+            dragState = null;
+            if (Math.abs(yawVelocity) < 0.0009) yawVelocity = 0.0009;
+            if (movement < 6) {
+              const bounds = canvas.getBoundingClientRect();
+              selectStar(starAt(event.clientX - bounds.left, event.clientY - bounds.top));
+            }
+          });
+
+          canvas.addEventListener("pointerleave", () => {
+            tooltip.style.opacity = 0;
+            hoveredStar = null;
+          });
+
+          // Ctrl/⌘ + wheel zooms the map instead of the page.
+          canvas.addEventListener(
+            "wheel",
+            (event) => {
+              if (!event.ctrlKey && !event.metaKey) return;
+              event.preventDefault();
+              targetZoom = Math.max(0.6, Math.min(2.6, targetZoom * (event.deltaY < 0 ? 1.1 : 0.9)));
+            },
+            { passive: false },
+          );
+
+          /** Show the spec card for a star (`null` closes it). */
+          function selectStar(star) {
+            selectedStar = star;
+            if (!star) {
+              infoCard.classList.remove("show");
+              return;
+            }
+            const url = star.path ? `https://www.w3.org/TR/${star.path}/` : "https://www.w3.org/TR/";
+            infoCard.style.setProperty("--c", star.group.color);
+            infoCard.innerHTML = `<div class="g">${star.group.label.toUpperCase()}</div><h4>${star.name}</h4><p class="mono">w3.org/TR/${star.path}/</p><div style="display:flex;gap:8px"><a class="btn" style="text-decoration:none;font-size:13px" href="${url}" target="_blank" rel="noopener">Open the spec ↗</a><button class="btn" style="font-size:13px" type="button" id="cardx">Close</button></div>`;
+            infoCard.classList.add("show");
+            $("#cardx").onclick = () => selectStar(null);
+          }
+
+          /** Rotate the camera so a group faces the viewer. */
+          function faceGroup(group) {
+            const targetAngle = Math.atan2(-group.x, -group.z);
+            const difference =
+              ((((targetAngle - yaw) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+            targetYaw = yaw + difference;
+            targetPitch = Math.atan2(-group.y, Math.hypot(group.x, group.z));
+            yawVelocity = 0.0004;
+          }
+
+          legend.addEventListener("click", (event) => {
+            const button = event.target.closest("button");
+            if (!button) return;
+            const group = groups.find((candidate) => candidate.id === button.dataset.g);
+            if (focusedGroup === group) {
+              focusedGroup = null;
+              targetZoom = 1;
+              yawVelocity = 0.0009;
+            } else {
+              focusedGroup = group;
+              faceGroup(group);
+              targetZoom = 1.7;
+            }
+            $$("button", legend).forEach((legendButton) =>
+              legendButton.classList.toggle("off", !!focusedGroup && legendButton !== button),
+            );
+          });
+
+          $("#q").addEventListener("input", (event) => {
+            query = event.target.value.trim().toLowerCase();
+          });
+        })();
+
+        /* ================= SCRIPTS ================= */
+        /*
+         * Live examples of vertical writing, ruby annotations and emphasis
+         * marks, with the CSS that produces them shown alongside.
+         */
+        (function scripts() {
+          /** Build a line of ruby-annotated text, optionally wrapped in an emphasis span. */
+          const rubyText = (pairs) =>
+            pairs
+              .map(([character, reading, emphasised]) => {
+                const text = reading ? `<ruby>${character}<rt>${reading}</rt></ruby>` : character;
+                return emphasised ? `<span class="em">${text}</span>` : text;
+              })
+              .join("");
+
+          /* Li Bai, "Quiet Night Thought" — one array entry per line. */
+          const quietNightThought = [
+            [["床", "chuáng"], ["前", "qián"], ["明", "míng", 1], ["月", "yuè", 1], ["光", "guāng"], ["，"]],
+            [["疑", "yí"], ["是", "shì"], ["地", "dì"], ["上", "shàng"], ["霜", "shuāng"], ["。"]],
+            [["举", "jǔ"], ["头", "tóu"], ["望", "wàng"], ["明", "míng", 1], ["月", "yuè", 1], ["，"]],
+            [["低", "dī"], ["头", "tóu"], ["思", "sī"], ["故", "gù"], ["乡", "xiāng"], ["。"]],
+          ];
+
+          /** One line of the CSS listing: a property, its value and an optional comment. */
+          const cssLine = (property, value, comment) =>
+            `  <span class="p">${property}</span>: <span class="v">${value}</span>;${comment ? ` <span class="c">/* ${comment} */</span>` : ""}`;
+
+          const WRITING_SYSTEMS = [
+            {
+              id: "zh",
+              label: "中文 · Chinese",
+              fileName: "clreq.css",
+              requirementsSlug: "clreq",
+              state: { vertical: true, ruby: true, emphasis: true, autospace: true, trim: true },
+              controls: [
+                ["vertical", "Vertical / horizontal"],
+                ["ruby", "Pinyin ruby"],
+                ["emphasis", "Emphasis marks"],
+                ["autospace", "CJK–Latin spacing"],
+                ["trim", "Punctuation trimming"],
+              ],
+              description:
+                "“Quiet Night Thought” by Li Bai, 8th century — Moonlight before my bed; could it be frost upon the ground? I raise my head to the bright moon, then lower it and think of home.",
+              sample: (state) =>
+                `<div class="sample ${state.vertical ? "v" : "h"}${state.ruby ? "" : " noruby"}${state.emphasis ? " emph" : ""} ${state.autospace ? "auto" : "noauto"} ${state.trim ? "trim" : "notrim"}" lang="zh-Hans"><h5>静夜思</h5><p class="meta">唐 · 李白</p>${quietNightThought.map((line) => `<p>${rubyText(line)}</p>`).join("")}<p class="meta" style="margin-top:.8em">W3C创立于1994年<span class="tcy">10</span>月，《中文排版需求》于2015年首次公开发布。</p><p class="meta">「Web为所有人而存在。」</p></div>`,
+              code: (state) => [
+                `<span class="c">/* Chinese layout · W3C “Requirements for Chinese Text Layout” */</span>`,
+                `<span class="s">.poem</span> {`,
+                cssLine(
+                  "writing-mode",
+                  state.vertical ? "vertical-rl" : "horizontal-tb",
+                  state.vertical ? "top to bottom, columns right to left" : "left to right",
+                ),
+                cssLine("text-emphasis", state.emphasis ? "filled dot" : "none", "emphasis marks"),
+                cssLine(
+                  "text-autospace",
+                  state.autospace ? "normal" : "no-autospace",
+                  "space between Han and Latin",
+                ),
+                cssLine(
+                  "text-spacing-trim",
+                  state.trim ? "trim-start" : "space-all",
+                  "squeeze leading punctuation",
+                ),
+                `}`,
+                `<span class="s">rt</span> {`,
+                cssLine("visibility", state.ruby ? "visible" : "hidden", "pinyin via &lt;ruby&gt;"),
+                `}`,
+                `<span class="s">.tcy</span> {`,
+                cssLine("text-combine-upright", "all", "“10” set upright in vertical text"),
+                `}`,
+              ],
+              // Which code lines to highlight when a control is toggled.
+              highlightedLine: { vertical: 2, emphasis: 3, autospace: 4, trim: 5, ruby: 8 },
+              specs: "CSS Writing Modes 4 · CSS Ruby · CSS Text Decoration 3 · CSS Text 4",
+            },
+            {
+              id: "ja",
+              label: "日本語 · Japanese",
+              fileName: "jlreq.css",
+              requirementsSlug: "jlreq",
+              state: { vertical: true, ruby: true, emphasis: true },
+              controls: [
+                ["vertical", "Vertical / horizontal"],
+                ["ruby", "Furigana ruby"],
+                ["emphasis", "Sesame emphasis"],
+              ],
+              description: "Matsuo Bashō, 1686 — An old pond; a frog jumps in; the sound of water.",
+              sample: (state) =>
+                `<div class="sample jpn ${state.vertical ? "v" : "h"}${state.ruby ? "" : " noruby"}${state.emphasis ? " emph" : ""}" lang="ja"><h5>${rubyText([["古池", "ふるいけ"], ["や"]])}</h5><p>${rubyText([["蛙", "かわず"], ["飛", "と"], ["び"], ["込", "こ"], ["む"]])}</p><p><span class="em" style="text-emphasis-style:sesame;-webkit-text-emphasis-style:sesame">${rubyText([["水", "みず"], ["の"], ["音", "おと"]])}</span></p><p class="meta" style="margin-top:1em">松尾芭蕉 · <span class="tcy">16</span>86年</p></div>`,
+              code: (state) => [
+                `<span class="c">/* Japanese layout · W3C “Requirements for Japanese Text Layout” */</span>`,
+                `<span class="s">.haiku</span> {`,
+                cssLine("writing-mode", state.vertical ? "vertical-rl" : "horizontal-tb"),
+                cssLine("ruby-position", "over", "furigana to the right (vertical) / above"),
+                `}`,
+                `<span class="s">rt</span> {`,
+                cssLine("visibility", state.ruby ? "visible" : "hidden", "reading aid for kanji"),
+                `}`,
+                `<span class="s">.em</span> {`,
+                cssLine("text-emphasis", state.emphasis ? "sesame" : "none", "kenten: sesame dots"),
+                `}`,
+              ],
+              highlightedLine: { vertical: 2, ruby: 6, emphasis: 9 },
+              specs: "CSS Writing Modes 4 · CSS Ruby · CSS Text Decoration 3",
+            },
+          ];
+
+          const tabs = $("#tabs");
+          const stage = $("#stage");
+          const controls = $("#ctrls");
+          const codeBlock = $("#code");
+
+          tabs.innerHTML = WRITING_SYSTEMS.map(
+            (tab, index) =>
+              `<button class="tab" role="tab" type="button" aria-selected="${index === 0}" data-i="${index}">${tab.label}</button>`,
+          ).join("");
+
+          let activeTab = 0;
+          let lastToggledKey = null;
+
+          /** Run `update` inside a view transition when the browser supports it. */
+          const withViewTransition = (update) => {
+            if (document.startViewTransition && !prefersReducedMotion && !isStill()) {
+              document.startViewTransition(update);
+            } else {
+              update();
+            }
+          };
+
+          function renderTab() {
+            const tab = WRITING_SYSTEMS[activeTab];
+            stage.innerHTML = tab.sample(tab.state);
+            controls.innerHTML = tab.controls
+              .map(
+                ([key, label]) =>
+                  `<button class="btn" type="button" data-k="${key}" aria-pressed="${!!tab.state[key]}">${label}</button>`,
+              )
+              .join("");
+
+            const lines = tab.code(tab.state);
+            const highlighted =
+              lastToggledKey != null && tab.highlightedLine[lastToggledKey] != null
+                ? tab.highlightedLine[lastToggledKey]
+                : -1;
+            codeBlock.innerHTML = lines
+              .map((line, index) => (index === highlighted ? `<mark>${line}</mark>` : line))
+              .join("\n");
+
+            $("#codefile").textContent = tab.fileName;
+            $("#gloss").textContent = tab.description;
+            $("#codespec").innerHTML =
+              `Specs: <b>${tab.specs}</b><br>Layout requirements: <a href="https://www.w3.org/TR/${tab.requirementsSlug}/" target="_blank" rel="noopener">w3.org/TR/${tab.requirementsSlug}</a>`;
+            $$(".tab", tabs).forEach((button, index) =>
+              button.setAttribute("aria-selected", index === activeTab),
+            );
+          }
+
+          tabs.addEventListener("click", (event) => {
+            const button = event.target.closest(".tab");
+            if (!button) return;
+            lastToggledKey = null;
+            activeTab = +button.dataset.i;
+            withViewTransition(renderTab);
+          });
+
+          tabs.addEventListener("keydown", (event) => {
+            if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+            activeTab =
+              (activeTab + (event.key === "ArrowRight" ? 1 : WRITING_SYSTEMS.length - 1)) %
+              WRITING_SYSTEMS.length;
+            lastToggledKey = null;
+            withViewTransition(renderTab);
+            $$(".tab", tabs)[activeTab].focus();
+          });
+
+          controls.addEventListener("click", (event) => {
+            const button = event.target.closest("button");
+            if (!button) return;
+            const tab = WRITING_SYSTEMS[activeTab];
+            const key = button.dataset.k;
+            tab.state[key] = !tab.state[key];
+            lastToggledKey = key;
+            // Only the vertical/horizontal switch gets a view transition.
+            if (key === "vertical") withViewTransition(renderTab);
+            else renderTab();
+          });
+
+          renderTab();
+
+          // Used by the standards switchboard to jump straight to the vertical example.
+          window.__showTab = (index) => {
+            activeTab = index;
+            lastToggledKey = null;
+            renderTab();
+          };
+        })();
+
+        /* ================= ACCESSIBILITY ================= */
+        /*
+         * Three tools from the accessibility world: a vision simulation that
+         * filters the whole page, a WCAG contrast calculator, and a live
+         * approximation of the accessibility tree.
+         */
+        (function accessibility() {
+          const page = $("#page");
+
+          /* ---------- Vision simulation ---------- */
+
+          $("#vis").addEventListener("click", (event) => {
+            const button = event.target.closest("button");
+            if (!button) return;
+            const filterName = button.dataset.f;
+            page.style.filter =
+              filterName === "none"
+                ? ""
+                : filterName === "blur"
+                  ? "blur(2.6px) contrast(.8)"
+                  : `url(#f-${filterName})`;
+            $$("#vis button").forEach((visibilityButton) => {
+              visibilityButton.classList.toggle("on", visibilityButton === button);
+              visibilityButton.setAttribute("aria-pressed", visibilityButton === button);
+            });
+          });
+
+          /* ---------- WCAG contrast lab ---------- */
+
+          const foreground = $("#fg");
+          const background = $("#bgc");
+          const preview = $("#preview");
+
+          /** "#rrggbb" → [r, g, b]. */
+          const hexToRgb = (hex) => [1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16));
+
+          /** WCAG 2.2 relative luminance. */
+          const relativeLuminance = (rgb) => {
+            const [red, green, blue] = rgb.map((channel) => {
+              const value = channel / 255;
+              return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+          };
+
+          /** Contrast ratio as defined by WCAG 2.2: (L1 + 0.05) / (L2 + 0.05). */
+          const contrastRatio = (a, b) => {
+            const luminanceA = relativeLuminance(a);
+            const luminanceB = relativeLuminance(b);
+            return (Math.max(luminanceA, luminanceB) + 0.05) / (Math.min(luminanceA, luminanceB) + 0.05);
+          };
+
+          const rgbToHex = (rgb) =>
+            "#" + rgb.map((value) => Math.round(value).toString(16).padStart(2, "0")).join("");
+
+          function updateContrast() {
+            const ratio = contrastRatio(hexToRgb(foreground.value), hexToRgb(background.value));
+            preview.style.color = foreground.value;
+            preview.style.background = background.value;
+            $("#ratio").textContent = ratio.toFixed(2);
+            $("#badges").innerHTML = [
+              ["AA text", 4.5],
+              ["AA large", 3],
+              ["AAA text", 7],
+              ["AAA large", 4.5],
+              ["Non-text 1.4.11", 3],
+            ]
+              .map(
+                ([name, threshold]) =>
+                  `<span class="${ratio >= threshold ? "pass" : "fail"}">${ratio >= threshold ? "✓" : "✗"} ${name} ≥ ${threshold}</span>`,
+              )
+              .join("");
+          }
+
+          foreground.oninput = background.oninput = updateContrast;
+
+          $("#fix").onclick = () => {
+            const textColor = hexToRgb(foreground.value);
+            const backgroundColor = hexToRgb(background.value);
+            if (contrastRatio(textColor, backgroundColor) >= 4.5) return;
+
+            // Move every channel towards white or black, whichever gives more
+            // contrast, and binary-search the smallest move that reaches AA.
+            const target =
+              contrastRatio([255, 255, 255], backgroundColor) > contrastRatio([0, 0, 0], backgroundColor)
+                ? 255
+                : 0;
+            let low = 0;
+            let high = 1;
+            for (let step = 0; step < 24; step++) {
+              const midpoint = (low + high) / 2;
+              const candidate = textColor.map((value) => value + (target - value) * midpoint);
+              if (contrastRatio(candidate, backgroundColor) >= 4.5) high = midpoint;
+              else low = midpoint;
+            }
+            foreground.value = rgbToHex(textColor.map((value) => value + (target - value) * high));
+            updateContrast();
+            if (preview.animate) {
+              preview.animate([{ transform: "scale(1.03)" }, { transform: "none" }], { duration: 400 });
+            }
+          };
+
+          $("#rnd").onclick = () => {
+            const randomHex = () => rgbToHex([0, 0, 0].map(() => Math.random() * 255));
+            foreground.value = randomHex();
+            background.value = randomHex();
+            updateContrast();
+          };
+
+          updateContrast();
+
+          /* ---------- Simplified accessibility tree ---------- */
+
+          const tree = $("#tree");
+          let treeItems = [];
+
+          /** Approximate the accessible name of an element. */
+          function accessibleName(element) {
+            const label = element.getAttribute("aria-label");
+            if (label) return label;
+
+            const labelledBy = element.getAttribute("aria-labelledby");
+            if (labelledBy) {
+              const labelElement = document.getElementById(labelledBy);
+              if (labelElement) {
+                return (labelElement.innerText || labelElement.textContent).replace(/\s+/g, " ").trim();
+              }
+            }
+
+            if (element.tagName === "INPUT") return element.placeholder || "";
+            return (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
+          }
+
+          function buildTree() {
+            treeItems = [];
+            const walk = (element, depth) => {
+              for (const child of element.children) {
+                if (
+                  child.getAttribute("aria-hidden") === "true" ||
+                  child.hidden ||
+                  child.tagName === "SCRIPT" ||
+                  child.tagName === "STYLE" ||
+                  child.id === "std"
+                ) {
+                  continue;
+                }
+
+                const tag = child.tagName;
+                let role = null;
+                if (tag === "MAIN") role = "main";
+                else if (tag === "NAV") role = "navigation";
+                else if (tag === "ASIDE") role = "complementary";
+                else if (tag === "FOOTER") role = "contentinfo";
+                else if (
+                  tag === "SECTION" &&
+                  (child.getAttribute("aria-label") || child.getAttribute("aria-labelledby"))
+                ) {
+                  role = "region";
+                } else if (/^H[1-6]$/.test(tag)) role = "heading level " + tag[1];
+                else if (tag === "BUTTON") role = "button";
+                else if (tag === "A") role = "link";
+                else if (tag === "INPUT") {
+                  role =
+                    child.type === "search"
+                      ? "search box"
+                      : child.type === "color"
+                        ? "colour picker"
+                        : "text box";
+                } else if (child.getAttribute("role") === "tablist") role = "tab list";
+                else if (child.getAttribute("role") === "tab") role = "tab";
+                else if (tag === "CANVAS" && child.getAttribute("aria-label")) role = "image";
+                else if (tag === "BLOCKQUOTE") role = "blockquote";
+
+                if (!role) {
+                  walk(child, depth);
+                  continue;
+                }
+
+                // Landmarks without an explicit name are announced without one.
+                const isUnnamedLandmark =
+                  /^(MAIN|NAV|ASIDE|FOOTER|SECTION)$/.test(tag) &&
+                  !child.getAttribute("aria-label") &&
+                  !child.getAttribute("aria-labelledby");
+                let name = isUnnamedLandmark ? "" : accessibleName(child);
+                if (name.length > 46) name = name.slice(0, 46) + "…";
+
+                let state = "";
+                if (child.hasAttribute("aria-pressed")) {
+                  state = child.getAttribute("aria-pressed") === "true" ? ", pressed" : ", not pressed";
+                }
+                if (child.getAttribute("aria-selected") === "true") state = ", selected";
+
+                treeItems.push({
+                  depth,
+                  role,
+                  name,
+                  state,
+                  speak: /region|heading|main|navigation|blockquote/.test(role),
+                });
+
+                // Buttons, links, inputs and headings are leaves as far as this tree goes.
+                if (/^(BUTTON|A|INPUT|H[1-6])$/.test(tag)) continue;
+                walk(child, depth + 1);
+              }
+            };
+            walk(document.body, 0);
+
+            tree.innerHTML = treeItems
+              .map(
+                (item, index) =>
+                  `<li data-i="${index}" style="padding-left:${item.depth * 16}px"><span class="r">${item.role}</span> <span class="n">${item.name}</span>${item.state}</li>`,
+              )
+              .join("");
+          }
+
+          new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) buildTree();
+          }).observe(tree);
+
+          // Rebuild after any interaction that may have changed the page.
+          document.addEventListener("click", () =>
+            setTimeout(() => {
+              if (tree.getBoundingClientRect().top < innerHeight) buildTree();
+            }, 60),
+          );
+
+          $("#speak").onclick = () => {
+            if (!("speechSynthesis" in window)) {
+              tree.insertAdjacentHTML(
+                "afterbegin",
+                '<li class="r">This browser does not support the Web Speech API</li>',
+              );
+              return;
+            }
+            buildTree();
+            speechSynthesis.cancel();
+
+            const spokenItems = treeItems
+              .map((item, index) => [item, index])
+              .filter(([item]) => item.speak)
+              .slice(0, 40);
+
+            spokenItems.forEach(([item, index]) => {
+              const utterance = new SpeechSynthesisUtterance(`${item.role}. ${item.name}`);
+              utterance.lang = "en-US";
+              utterance.rate = 1.05;
+              utterance.onstart = () => {
+                $$("#tree li").forEach((listItem) => listItem.classList.remove("speaking"));
+                const listItem = tree.querySelector(`li[data-i="${index}"]`);
+                if (listItem) {
+                  listItem.classList.add("speaking");
+                  tree.scrollTo({
+                    top: listItem.offsetTop - tree.clientHeight / 2,
+                    behavior: "smooth",
+                  });
+                }
+              };
+              speechSynthesis.speak(utterance);
+            });
+          };
+
+          $("#stop").onclick = () => {
+            if (window.speechSynthesis) speechSynthesis.cancel();
+            $$("#tree li").forEach((listItem) => listItem.classList.remove("speaking"));
+          };
+        })();
+
+        /* ================= WHAT IF THERE WERE NO STANDARDS ================= */
+        /*
+         * The floating switchboard at the bottom of the page. Each switch turns
+         * off one standard and lets you see what the page is made of. The panel
+         * lives in a shadow root so that disabling the page's CSS does not
+         * disable the switchboard itself.
+         */
+        (function switchboard() {
+          const root = document.documentElement;
+
+          const host = document.createElement("div");
+          host.id = "std";
+          document.body.appendChild(host);
+          const shadow = host.attachShadow({ mode: "open" });
+
+          const STANDARDS = [
+            {
+              key: "css",
+              icon: "Aa",
+              title: "Style",
+              descriptionOn: "Colour, type, layout — how everything looks",
+              descriptionOff: "Back to 1991: black text and blue links",
+              standard: "CSS",
+            },
+            {
+              key: "anim",
+              icon: "↻",
+              title: "Motion",
+              descriptionOn: "Particles drift, the galaxy turns, sections glide in",
+              descriptionOff: "Everything freezes into a still picture",
+              standard: "CSS Animations · Web Animations",
+            },
+            {
+              key: "gfx",
+              icon: "◆",
+              title: "Graphics",
+              descriptionOn: "Particles, the star map, the sound visualizer",
+              descriptionOff: "Everything drawn on screen is gone",
+              standard: "Canvas · WebGL",
+            },
+            {
+              key: "uni",
+              icon: "Ü",
+              title: "Text encoding",
+              descriptionOn: "Every writing system on Earth shows up correctly",
+              descriptionOff: "Quotes turn into â€œ and Chinese into gibberish",
+              standard: "Unicode · UTF-8",
+            },
+            {
+              key: "cjk",
+              icon: "縦",
+              title: "Vertical text & ruby",
+              descriptionOn: "Chinese and Japanese set top to bottom, with reading aids",
+              descriptionOff: "Forced sideways; pronunciation guides vanish",
+              standard: "CSS Writing Modes · CSS Ruby",
+              opensTab: 0,
+            },
+          ];
+
+          const state = Object.fromEntries(STANDARDS.map((standard) => [standard.key, true]));
+
+          shadow.innerHTML = `<style>
+            :host {
+              all: initial;
+            }
+            * {
+              box-sizing: border-box;
+            }
+
+            /* The floating pill that opens the sheet. */
+            .fab {
+              white-space: nowrap;
+              position: fixed;
+              left: 50%;
+              bottom: 20px;
+              transform: translateX(-50%);
+              z-index: 2147483000;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 10px 18px 10px 12px;
+              border-radius: 999px;
+              border: 1px solid rgba(120, 210, 255, 0.45);
+              background: rgba(4, 8, 16, 0.72);
+              backdrop-filter: blur(14px) saturate(1.4);
+              -webkit-backdrop-filter: blur(14px);
+              color: #e8edf7;
+              font: 500 14px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+              cursor: pointer;
+              box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+              transition: transform 0.3s, background 0.3s;
+            }
+            .fab:hover {
+              background: rgba(10, 20, 36, 0.9);
+            }
+            .fab .dots {
+              display: flex;
+              gap: 3px;
+            }
+            .fab .dots i {
+              width: 7px;
+              height: 7px;
+              border-radius: 50%;
+              background: #5ee39a;
+              box-shadow: 0 0 8px #5ee39a;
+              transition: 0.3s;
+            }
+            .fab .dots i.off {
+              background: #ff5a6e;
+              box-shadow: 0 0 8px #ff5a6e;
+            }
+            .fab small {
+              color: #8a96ad;
+              font-size: 12px;
+            }
+
+            /* The panel. */
+            .sheet {
+              position: fixed;
+              right: 16px;
+              top: 16px;
+              bottom: 16px;
+              z-index: 2147483001;
+              width: 380px;
+              overflow: auto;
+              transform: translateX(calc(100% + 40px));
+              transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+              border-radius: 22px;
+              border: 1px solid rgba(255, 255, 255, 0.12);
+              background: rgba(6, 10, 20, 0.94);
+              backdrop-filter: blur(18px);
+              -webkit-backdrop-filter: blur(18px);
+              color: #e8edf7;
+              font: 14px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+              padding: 22px 18px 18px;
+              box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+              display: flex;
+              flex-direction: column;
+            }
+            .sheet.open {
+              transform: none;
+            }
+            header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              gap: 16px;
+              margin-bottom: 16px;
+            }
+            h3 {
+              margin: 0;
+              font: 700 22px/1.25 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+            }
+            header p {
+              margin: 4px 0 0;
+              color: #8a96ad;
+              font-size: 13.5px;
+            }
+            .x {
+              border: 1px solid rgba(255, 255, 255, 0.15);
+              background: none;
+              color: #e8edf7;
+              border-radius: 999px;
+              width: 34px;
+              height: 34px;
+              font-size: 16px;
+              cursor: pointer;
+              flex: none;
+            }
+
+            /* Switch rows. */
+            .grid {
+              display: grid;
+              gap: 10px;
+            }
+            .card {
+              display: grid;
+              grid-template-columns: 46px 1fr auto;
+              gap: 14px;
+              align-items: center;
+              text-align: left;
+              padding: 14px 16px;
+              border-radius: 16px;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              background: rgba(255, 255, 255, 0.03);
+              color: inherit;
+              font: inherit;
+              cursor: pointer;
+              transition: background 0.3s, border-color 0.3s;
+            }
+            .card:hover {
+              border-color: rgba(120, 210, 255, 0.5);
+            }
+            .card:focus-visible,
+            .fab:focus-visible,
+            .act button:focus-visible {
+              outline: 2px solid #ffd27a;
+              outline-offset: 2px;
+            }
+            .ic {
+              width: 46px;
+              height: 46px;
+              border-radius: 12px;
+              display: grid;
+              place-items: center;
+              font: 700 20px/1 Georgia, "Noto Serif CJK JP", serif;
+              background: rgba(95, 212, 255, 0.12);
+              color: #5fd4ff;
+              transition: 0.3s;
+            }
+            .t {
+              font-weight: 700;
+              font-size: 16px;
+            }
+            .d {
+              color: #8a96ad;
+              font-size: 13px;
+              line-height: 1.5;
+              min-height: 2.9em;
+            }
+            .s {
+              font: 11px/1.4 "DejaVu Sans Mono", monospace;
+              color: #5b6a86;
+              margin-top: 2px;
+            }
+            .sw {
+              width: 46px;
+              height: 26px;
+              border-radius: 99px;
+              background: #5ee39a;
+              position: relative;
+              transition: 0.3s;
+              flex: none;
+            }
+            .sw::after {
+              content: "";
+              position: absolute;
+              top: 3px;
+              left: 23px;
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background: #fff;
+              transition: 0.3s;
+            }
+
+            /* Switched-off state. */
+            .card[aria-checked="false"] {
+              background: rgba(255, 90, 110, 0.08);
+              border-color: rgba(255, 90, 110, 0.45);
+            }
+            .card[aria-checked="false"] .sw {
+              background: #3a455c;
+            }
+            .card[aria-checked="false"] .sw::after {
+              left: 3px;
+            }
+            .card[aria-checked="false"] .ic {
+              background: rgba(255, 90, 110, 0.14);
+              color: #ff7a8a;
+            }
+            .card[aria-checked="false"] .d {
+              color: #ffb3bd;
+            }
+
+            /* Footer actions. */
+            .act {
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+              margin-top: auto;
+              padding-top: 14px;
+            }
+            .act span {
+              min-height: 3em;
+            }
+            .act div {
+              display: flex;
+              gap: 8px;
+            }
+            .act button {
+              border: 1px solid rgba(255, 255, 255, 0.15);
+              background: none;
+              color: #e8edf7;
+              border-radius: 999px;
+              padding: 8px 16px;
+              font: inherit;
+              cursor: pointer;
+            }
+            .act button.pri {
+              background: #e8edf7;
+              color: #05070d;
+              border-color: #e8edf7;
+            }
+            .act span {
+              color: #8a96ad;
+              font-size: 12.5px;
+            }
+
+            @media (max-width: 760px) {
+              .fab small {
+                display: none;
+              }
+              .sheet {
+                left: 8px;
+                right: 8px;
+                top: auto;
+                bottom: 8px;
+                width: auto;
+                max-height: 58vh;
+                transform: translateY(calc(100% + 40px));
+                padding: 16px 14px 12px;
+              }
+              header {
+                margin-bottom: 10px;
+              }
+              h3 {
+                font-size: 18px;
+              }
+              header p {
+                display: none;
+              }
+              .grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+              }
+              .card {
+                grid-template-columns: 1fr auto;
+                gap: 8px;
+                padding: 10px 12px;
+              }
+              .card .ic,
+              .card .d,
+              .card .s {
+                display: none;
+              }
+              .t {
+                font-size: 14.5px;
+              }
+              .act {
+                padding-top: 10px;
+              }
+              .act span {
+                min-height: 0;
+              }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .sheet,
+              .fab,
+              .card,
+              .sw,
+              .sw::after {
+                transition: none;
+              }
+            }
+          </style>
+          <button class="fab" type="button" aria-expanded="false" aria-controls="sheet"><span class="dots">${STANDARDS.map(() => "<i></i>").join("")}</span><span>What if there were no standards?</span><small id="cnt"></small></button>
+          <section class="sheet" id="sheet" role="dialog" aria-label="What if there were no standards?" aria-modal="false">
+            <header><div><h3>This page runs on open standards</h3><p>Each switch is a published standard. Turn one off and see what this page loses.</p></div><button class="x" type="button" aria-label="Close">✕</button></header>
+            <div class="grid">${STANDARDS.map((standard) => `<button class="card" type="button" role="switch" aria-checked="true" data-k="${standard.key}"><span class="ic" aria-hidden="true">${standard.icon}</span><span><div class="t">${standard.title}</div><div class="d">${standard.descriptionOn}</div><div class="s">${standard.standard}</div></span><span class="sw" aria-hidden="true"></span></button>`).join("")}</div>
+            <div class="act"><span id="msg">All standards are working.</span><div><button type="button" id="all-off">Turn all off</button><button type="button" class="pri" id="all-on">Restore all</button></div></div>
+          </section>`;
+
+          const fab = shadow.querySelector(".fab");
+          const sheet = shadow.querySelector(".sheet");
+
+          function setSheetOpen(open) {
+            sheet.classList.toggle("open", open);
+            fab.setAttribute("aria-expanded", open);
+            fab.style.transform = open ? "translate(-50%,120px)" : "";
+          }
+
+          fab.onclick = () => setSheetOpen(true);
+          shadow.querySelector(".x").onclick = () => setSheetOpen(false);
+          addEventListener("keydown", (event) => {
+            if (event.key === "Escape") setSheetOpen(false);
+          });
+
+          /* ---------- Standard by standard ---------- */
+
+          /* CSS: disable every stylesheet, and remember inline styles to restore them. */
+          const savedInlineStyles = new Map();
+          function applyCss(enable) {
+            for (const styleSheet of document.styleSheets) styleSheet.disabled = !enable;
+            if (!enable) {
+              document.querySelectorAll("[style]").forEach((element) => {
+                if (element === host) return;
+                savedInlineStyles.set(element, element.getAttribute("style"));
+                element.removeAttribute("style");
+              });
+              document.querySelectorAll("canvas").forEach((canvas) => {
+                canvas.style.maxWidth = "100%";
+              });
+            } else {
+              document
+                .querySelectorAll("canvas")
+                .forEach((canvas) => canvas.style.removeProperty("max-width"));
+              savedInlineStyles.forEach((value, element) => element.setAttribute("style", value));
+              savedInlineStyles.clear();
+            }
+          }
+
+          /* Unicode: decode the UTF-8 bytes with the wrong encoding. */
+          const wrongDecoder = new TextDecoder("windows-1252");
+          const utf8Encoder = new TextEncoder();
+          const originalText = new Map();
+          const garbledNodes = new WeakSet();
+          const garble = (text) => wrongDecoder.decode(utf8Encoder.encode(text));
+
+          function garbleTextNode(node) {
+            if (garbledNodes.has(node) || !/[^\x00-\x7f]/.test(node.data)) return;
+            const parent = node.parentNode;
+            if (!parent || /^(SCRIPT|STYLE)$/.test(parent.nodeName)) return;
+            originalText.set(node, node.data);
+            garbledNodes.add(node);
+            node.data = garble(node.data);
+          }
+
+          function garbleSubtree(element) {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+            let node;
+            const textNodes = [];
+            while ((node = walker.nextNode())) textNodes.push(node);
+            textNodes.forEach(garbleTextNode);
+          }
+
+          // New text (timeline cards, spec cards, …) must be garbled too.
+          const textObserver = new MutationObserver((mutations) =>
+            mutations.forEach((mutation) => {
+              if (mutation.type === "characterData") {
+                if (!garbledNodes.has(mutation.target) || originalText.get(mutation.target) === undefined) {
+                  garbleTextNode(mutation.target);
+                } else if (mutation.target.data !== garble(originalText.get(mutation.target))) {
+                  garbledNodes.delete(mutation.target);
+                  garbleTextNode(mutation.target);
+                }
+                return;
+              }
+              mutation.addedNodes.forEach((addedNode) => {
+                if (addedNode.nodeType === 3) garbleTextNode(addedNode);
+                else if (addedNode.nodeType === 1) garbleSubtree(addedNode);
+              });
+            }),
+          );
+
+          function applyUnicode(enable) {
+            if (!enable) {
+              garbleSubtree(document.body);
+              textObserver.observe(document.body, { subtree: true, childList: true, characterData: true });
+              document.title = garble(document.title);
+            } else {
+              textObserver.disconnect();
+              originalText.forEach((text, node) => {
+                node.data = text;
+                garbledNodes.delete(node);
+              });
+              originalText.clear();
+              document.title = "Made of Standards";
+            }
+          }
+
+          const switchHandlers = {
+            css: applyCss,
+            anim: (enable) => root.classList.toggle("std-still", !enable),
+            gfx: (enable) => {
+              root.classList.toggle("std-nogfx", !enable);
+              document.querySelectorAll("canvas").forEach((canvas) => (canvas.hidden = !enable));
+            },
+            uni: applyUnicode,
+            cjk: (enable) => root.classList.toggle("std-nocjk", !enable),
+          };
+
+          function syncUI(lastSwitchedOff) {
+            const workingCount = STANDARDS.filter((standard) => state[standard.key]).length;
+
+            shadow.querySelectorAll(".dots i").forEach((dot, index) => {
+              dot.classList.toggle("off", !state[STANDARDS[index].key]);
+            });
+            shadow.getElementById("cnt").textContent = `${workingCount} / ${STANDARDS.length} working`;
+
+            shadow.querySelectorAll(".card").forEach((card) => {
+              const standard = STANDARDS.find((candidate) => candidate.key === card.dataset.k);
+              card.setAttribute("aria-checked", state[standard.key]);
+              card.querySelector(".d").textContent = state[standard.key]
+                ? standard.descriptionOn
+                : standard.descriptionOff;
+            });
+
+            shadow.getElementById("msg").textContent =
+              workingCount === STANDARDS.length
+                ? "All standards are working."
+                : lastSwitchedOff
+                  ? `“${lastSwitchedOff.title}” is off: ${lastSwitchedOff.descriptionOff}.`
+                  : `${STANDARDS.length - workingCount} of ${STANDARDS.length} standards switched off.`;
+          }
+
+          function setStandard(key, enable) {
+            if (state[key] === enable) return;
+            state[key] = enable;
+            switchHandlers[key](enable);
+          }
+
+          shadow.querySelector(".grid").addEventListener("click", (event) => {
+            const card = event.target.closest(".card");
+            if (!card) return;
+            const standard = STANDARDS.find((candidate) => candidate.key === card.dataset.k);
+            const enable = !state[standard.key];
+            setStandard(standard.key, enable);
+            syncUI(enable ? null : standard);
+
+            // Turning off vertical text jumps to the writing-system example.
+            if (!enable && standard.opensTab != null && state.css) {
+              window.__showTab && window.__showTab(standard.opensTab);
+              const stage = document.querySelector(".stagebox");
+              if (stage) {
+                const bounds = stage.getBoundingClientRect();
+                if (bounds.bottom < 0 || bounds.top > innerHeight * 0.6) {
+                  stage.scrollIntoView({ behavior: state.anim ? "smooth" : "auto", block: "start" });
+                }
+              }
+            }
+          });
+
+          shadow.getElementById("all-off").onclick = () => {
+            STANDARDS.forEach((standard) => setStandard(standard.key, false));
+            syncUI();
+          };
+
+          shadow.getElementById("all-on").onclick = () => {
+            STANDARDS.slice()
+              .reverse()
+              .forEach((standard) => setStandard(standard.key, true));
+            syncUI();
+          };
+
+          const killAllButton = document.getElementById("killall");
+          if (killAllButton) {
+            killAllButton.onclick = () => {
+              setSheetOpen(true);
+              STANDARDS.forEach((standard) => setStandard(standard.key, false));
+              syncUI();
+              scrollTo({ top: 0 });
+            };
+          }
+
+          syncUI();
+        })();
+
+        /* ================= Stats count-up ================= */
+        (function animateStats() {
+          const counters = $$("[data-to]");
+          const observer = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                observer.unobserve(entry.target);
+                const target = +entry.target.dataset.to;
+                const startTime = performance.now();
+                const step = (now) => {
+                  const progress = Math.min(1, (now - startTime) / 1400);
+                  entry.target.textContent = Math.round(target * (1 - Math.pow(1 - progress, 3)));
+                  if (progress < 1) requestAnimationFrame(step);
+                };
+                requestAnimationFrame(step);
+              }
+            },
+            { threshold: 0.5 },
+          );
+          counters.forEach((counter) => observer.observe(counter));
+        })();
+      })();
+    </script>
+  </body>
+</html>
