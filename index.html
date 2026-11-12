@@ -771,6 +771,9 @@
       #stage {
         position: absolute;
         inset: 0;
+        /* Safari resolves the vertical sample's height:100% against the viewport
+           when this box has an automatic height, so make it explicit. */
+        height: 100%;
         padding: 42px 48px;
         display: flex;
         align-items: center;
